@@ -228,6 +228,12 @@ foreach (array('description', 'installation', 'faq', 'Prywatność', 'changelog'
 }
 check(strpos($info->sections['description'], '<h4>Co zyskujesz</h4><ul><li>') !== false, 'Readme headings and lists must render as HTML.');
 check(apply_filters('plugins_api', false, 'plugin_information', (object) array('slug' => 'akismet')) === false, 'Other plugin info must pass through.');
+// Wtyczka jak CMS Portal: na priorytecie 20 zwraca false dla każdego obcego sluga.
+$greedy = function () { return false; };
+add_filter('plugins_api', $greedy, 20, 3);
+$info = apply_filters('plugins_api', false, 'plugin_information', (object) array('slug' => 'digital-xperts-social-meta'));
+check(is_object($info) && $info->slug === 'digital-xperts-social-meta', 'Details window survives a later plugins_api filter returning false.');
+remove_filter('plugins_api', $greedy, 20);
 $data = get_file_data(WP_PLUGIN_DIR . '/' . $file, array('v' => 'Version', 'u' => 'Update URI', 'd' => 'Description'));
 check($data['v'] === DigitalXperts\SocialMeta\VERSION && $data['u'] === 'https://d-x.pl/wtyczki/social-meta/' && mb_strlen($data['d']) < 140, 'Header: version matches constant, Update URI d-x.pl, description under 140 chars.');
 echo 'PASS: ' . $GLOBALS['checks'] . " integration checks on real WordPress\n";

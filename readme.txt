@@ -3,7 +3,7 @@ Contributors: digitalxperts
 Requires at least: 6.2
 Tested up to: 7.1.4
 Requires PHP: 7.4
-Stable tag: 2.0.3
+Stable tag: 2.0.4
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -78,6 +78,10 @@ Nie wysyła treści ani danych osobowych. Raz na kilka godzin sprawdza na GitHub
 Wtyczka korzysta z danych zapisanych w WordPressie. Do sprawdzenia aktualizacji łączy się z github.com bez przesyłania danych strony. Panel czyta publiczną wersję strony z tego samego serwera.
 
 == Changelog ==
+
+= 2.0.4 =
+
+* Okno „Zobacz szczegóły” działa także przy wtyczkach, które przechwytują informacje o wszystkich wtyczkach (np. CMS Portal z motywów CMSSuperHeroes).
 
 = 2.0.3 =
 

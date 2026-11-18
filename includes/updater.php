@@ -21,7 +21,9 @@ final class Updater {
         // Na części hostingów (np. z wtyczką blokującą zapytania do wordpress.org) WordPress nie odświeża listy
         // aktualizacji, więc filtr Update URI nie rusza. Wydanie dopisujemy też przy każdym odczycie tej listy.
         add_filter('site_transient_update_plugins', array(__CLASS__, 'inject'));
-        add_filter('plugins_api', array(__CLASS__, 'info'), 10, 3);
+        // Ostatni priorytet: część wtyczek (np. CMS Portal motywów CMSSuperHeroes, priorytet 20) zwraca false
+        // dla każdego obcego sluga i kasuje dane okna "Zobacz szczegóły" podane wcześniej.
+        add_filter('plugins_api', array(__CLASS__, 'info'), PHP_INT_MAX, 3);
     }
 
     public static function inject($transient) {
