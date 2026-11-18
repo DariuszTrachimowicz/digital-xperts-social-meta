@@ -3,7 +3,7 @@
  * Plugin Name: Digital Xperts Social Meta
  * Plugin URI: https://github.com/DariuszTrachimowicz/digital-xperts-social-meta
  * Description: Tytuły i opisy SEO z podglądem Google, znaczniki Open Graph i karty X oraz opcjonalne pełne SEO dla każdej strony WordPress.
- * Version: 2.0.2
+ * Version: 2.0.3
  * Requires at least: 6.2
  * Requires PHP: 7.4
  * Author: Dariusz Trachimowicz
@@ -21,7 +21,7 @@ namespace DigitalXperts\SocialMeta;
 
 defined('ABSPATH') || exit;
 
-const VERSION = '2.0.2';
+const VERSION = '2.0.3';
 
 // Panel SEO jest kodem proceduralnym i oczekuje tych stałych w globalnej przestrzeni nazw.
 \define('DXSM_VERSION', VERSION);
@@ -123,6 +123,9 @@ final class Plugin {
         foreach (array('site_name', 'default_description', 'default_image_alt') as $field) {
             $out[$field] = self::text(isset($input[$field]) ? $input[$field] : '');
         }
+        // Numer aplikacji z Meta for Developers (same cyfry); Facebook pokazuje bez niego ostrzeżenie w debugerze.
+        $app_id = isset($input['fb_app_id']) && is_scalar($input['fb_app_id']) ? trim((string) $input['fb_app_id']) : '';
+        $out['fb_app_id'] = preg_match('/^\d{5,20}$/D', $app_id) === 1 ? $app_id : '';
         $out['default_image_url'] = self::local_image_url(isset($input['default_image_url']) ? $input['default_image_url'] : '');
         foreach (array('default_image_width', 'default_image_height') as $field) {
             $out[$field] = min(10000, max(0, isset($input[$field]) && is_scalar($input[$field]) ? (int) $input[$field] : 0));
@@ -294,6 +297,7 @@ final class Plugin {
         $description = null;
         $og = false;
         $twitter = false;
+        $fb_app = false;
         while ($processor->next_tag()) {
             if ($processor->get_tag() === 'META') {
                 foreach (array('name', 'property') as $attribute) {
@@ -307,6 +311,7 @@ final class Plugin {
                     }
                     $og = $og || strpos($key, 'og:') === 0;
                     $twitter = $twitter || strpos($key, 'twitter:') === 0;
+                    $fb_app = $fb_app || $key === 'fb:app_id';
                 }
             } elseif ($processor->get_tag() === 'LINK') {
                 $rel = $processor->get_attribute('rel');
@@ -317,6 +322,10 @@ final class Plugin {
             }
         }
         $tags = array();
+        $app_id = self::settings()['fb_app_id'];
+        if (!$fb_app && $app_id !== '') {
+            $tags[] = array('property', 'fb:app_id', $app_id);
+        }
         if ($description === null && $context['description'] !== '') {
             $tags[] = array('name', 'description', $context['description']);
         }
@@ -368,7 +377,8 @@ final class Plugin {
         }
         $settings = self::settings();
         $fields = array('site_name' => 'Nazwa strony w linkach', 'default_description' => 'Domyślny opis', 'default_image_url' => 'Adres obrazu z tej strony (PNG, JPG lub WebP)',
-            'default_image_width' => 'Szerokość obrazu (px)', 'default_image_height' => 'Wysokość obrazu (px)', 'default_image_alt' => 'Opis obrazu');
+            'default_image_width' => 'Szerokość obrazu (px)', 'default_image_height' => 'Wysokość obrazu (px)', 'default_image_alt' => 'Opis obrazu',
+            'fb_app_id' => 'Facebook App ID (opcjonalnie)');
         echo '<section class="dxsm-admin-settings dxsm-admin-panel" style="margin-bottom:20px" aria-labelledby="dxsm-share-heading"><h2 id="dxsm-share-heading">Udostępnianie linków</h2>';
         echo '<p>Tak wyglądają linki do tej strony po wklejeniu ich na Facebooku, LinkedInie, w X i komunikatorach. Obraz musi pochodzić z tej strony. Wpis lub strona z obrazem wyróżniającym używa tego obrazu zamiast domyślnego.</p>';
         echo '<form method="post" action="options.php">';
@@ -379,6 +389,7 @@ final class Plugin {
             echo '<tr><th scope="row"><label for="' . esc_attr($field) . '">' . esc_html($label) . '</label></th><td><input class="regular-text" id="' . esc_attr($field) . '" type="' . esc_attr($type) . '" name="' . esc_attr(self::OPTION . '[' . $field . ']') . '" value="' . \dxsm_escape_seo_text((string) $settings[$field]) . '" /></td></tr>';
         }
         echo '</table>';
+        echo '<p class="description">Facebook App ID to numer aplikacji z Meta for Developers. Bez niego debuger udostępniania pokazuje ostrzeżenie o braku fb:app_id, ale podgląd linku działa normalnie.</p>';
         $full = self::full_seo();
         echo '<h2>Moduły</h2><table class="form-table" role="presentation"><tr><th scope="row">Pełne SEO</th><td><label><input type="hidden" name="' . esc_attr(self::MODULES . '[present]') . '" value="1" /><input type="checkbox" name="' . esc_attr(self::MODULES . '[full_seo]') . '" value="1" ' . checked($full, true, false) . ' /> Mapa witryny, robots, canonical, noindex, dane firmy w wyszukiwarce i import danych z SEOPress</label>';
         echo '<p class="description">Włącz tylko wtedy, gdy na stronie nie działa Yoast, Rank Math ani SEOPress. Moduł sam się wycofuje, gdy któraś z nich jest aktywna.</p></td></tr></table>';

@@ -202,6 +202,19 @@ if ($saved_settings === null) { delete_option('dxsm_settings'); } else { update_
 update_option('blogname', $old_name);
 wp_delete_post($plain, true);
 
+// 4a3. Facebook App ID: tylko cyfry, znacznik dopisany raz, także gdy og:* już są na stronie.
+$saved_settings = get_option('dxsm_settings', null);
+check(Plugin::sanitize_settings(array('fb_app_id' => ' 123456789012345 '))['fb_app_id'] === '123456789012345' && Plugin::sanitize_settings(array('fb_app_id' => '12a45'))['fb_app_id'] === '', 'App ID keeps digits only.');
+update_option('dxsm_settings', array('fb_app_id' => '123456789012345'));
+$fb_context = array('title' => 'T', 'description' => 'D', 'url' => home_url('/'), 'site_name' => 'S', 'locale' => 'pl_PL', 'type' => 'website', 'image' => array());
+$fb = metadata(Plugin::complete_head("<meta property=\"og:title\" content=\"Obcy\">\n", $fb_context));
+check(($fb['fb:app_id'] ?? null) === array('123456789012345'), 'fb:app_id is added next to foreign og tags.');
+$fb = metadata(Plugin::complete_head("<meta property=\"fb:app_id\" content=\"999999\">\n", $fb_context));
+check(($fb['fb:app_id'] ?? null) === array('999999'), 'Existing fb:app_id is kept, not duplicated.');
+update_option('dxsm_settings', array('fb_app_id' => ''));
+check(!isset(metadata(Plugin::complete_head('', $fb_context))['fb:app_id']), 'No fb:app_id without the setting.');
+if ($saved_settings === null) { delete_option('dxsm_settings'); } else { update_option('dxsm_settings', $saved_settings); }
+
 // 4b. Strona główna z najnowszymi wpisami, druga strona wyników: og:url z paginacją.
 update_option('show_on_front', 'posts');
 query_posts(array('paged' => 2));

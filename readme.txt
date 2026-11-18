@@ -3,7 +3,7 @@ Contributors: digitalxperts
 Requires at least: 6.2
 Tested up to: 7.1.4
 Requires PHP: 7.4
-Stable tag: 2.0.2
+Stable tag: 2.0.3
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,7 +45,7 @@ Wtyczka aktualizuje się z wydań na GitHubie: https://github.com/DariuszTrachim
 
 = Dane techniczne =
 
-* Ustawienia: opcje `dxsm_settings`, `dxsm_modules` i `dxsm_editor_settings`.
+* Ustawienia: opcje `dxsm_settings` (także `fb_app_id`), `dxsm_modules` i `dxsm_editor_settings`.
 * Pola SEO: `_dxsm_seo_title` i `_dxsm_seo_description`.
 * Moduł pełnego SEO zapisuje dane pod nazwami z pierwszego wdrożenia: `dxsm_rs2_seo_settings` i pola `_dxsm_rs2_*`.
 * Funkcje strony (np. własny obraz kart) można podać przez filtr `dxsm_social_image`.
@@ -78,6 +78,10 @@ Nie wysyła treści ani danych osobowych. Raz na kilka godzin sprawdza na GitHub
 Wtyczka korzysta z danych zapisanych w WordPressie. Do sprawdzenia aktualizacji łączy się z github.com bez przesyłania danych strony. Panel czyta publiczną wersję strony z tego samego serwera.
 
 == Changelog ==
+
+= 2.0.3 =
+
+* Pole „Facebook App ID” w ustawieniach: po wpisaniu numeru strona wysyła znacznik fb:app_id, a debuger Facebooka przestaje pokazywać ostrzeżenie.
 
 = 2.0.2 =
 
