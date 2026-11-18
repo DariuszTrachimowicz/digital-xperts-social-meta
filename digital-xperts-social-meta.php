@@ -3,7 +3,7 @@
  * Plugin Name: Digital Xperts Social Meta
  * Plugin URI: https://github.com/DariuszTrachimowicz/digital-xperts-social-meta
  * Description: Tytuły i opisy SEO z podglądem Google, znaczniki Open Graph i karty X oraz opcjonalne pełne SEO dla każdej strony WordPress.
- * Version: 2.0.0
+ * Version: 2.0.1
  * Requires at least: 6.2
  * Requires PHP: 7.4
  * Author: Dariusz Trachimowicz
@@ -21,7 +21,7 @@ namespace DigitalXperts\SocialMeta;
 
 defined('ABSPATH') || exit;
 
-const VERSION = '2.0.0';
+const VERSION = '2.0.1';
 
 // Panel SEO jest kodem proceduralnym i oczekuje tych stałych w globalnej przestrzeni nazw.
 \define('DXSM_VERSION', VERSION);
@@ -397,6 +397,12 @@ final class Plugin {
     public static function row_meta($links, $file) {
         if ($file !== self::SLUG . '/' . self::SLUG . '.php') {
             return $links;
+        }
+        // WordPress sam dodaje ten link, gdy aktualizator poda dane wydania; drugi byłby zdublowany.
+        foreach ($links as $link) {
+            if (strpos((string) $link, 'plugin=' . self::SLUG . '&') !== false) {
+                return $links;
+            }
         }
         $url = self_admin_url('plugin-install.php?tab=plugin-information&plugin=' . self::SLUG . '&TB_iframe=true&width=772&height=600');
         $links[] = '<a href="' . esc_url($url) . '" class="thickbox open-plugin-details-modal" aria-label="' . esc_attr('Więcej informacji o Digital Xperts Social Meta') . '">Zobacz szczegóły</a>';

@@ -219,6 +219,8 @@ $file = 'digital-xperts-social-meta/digital-xperts-social-meta.php';
 $row = apply_filters('plugin_row_meta', array(), $file, array(), 'all');
 check(count($row) === 1 && strpos($row[0], 'plugin=digital-xperts-social-meta') !== false, 'Plugin row must link to the details window.');
 check(apply_filters('plugin_row_meta', array(), 'other/other.php', array(), 'all') === array(), 'Other plugins must stay untouched.');
+// Bez sieci: okno pokazuje wersję zainstalowaną (wersję z GitHuba sprawdza unified.php).
+set_site_transient('dxsm_update_release', array(), HOUR_IN_SECONDS);
 $info = apply_filters('plugins_api', false, 'plugin_information', (object) array('slug' => 'digital-xperts-social-meta'));
 check(is_object($info) && $info->version === DigitalXperts\SocialMeta\VERSION, 'Details window must report the version.');
 foreach (array('description', 'installation', 'faq', 'Prywatność', 'changelog') as $section) {
