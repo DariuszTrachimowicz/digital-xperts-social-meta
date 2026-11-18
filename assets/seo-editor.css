@@ -1,0 +1,143 @@
+.dxsm-seo-editor {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 8px;
+	overflow-wrap: anywhere;
+}
+
+.dxsm-seo-editor > label,
+.dxsm-seo-editor legend {
+	font-weight: 600;
+}
+
+.dxsm-seo-editor > input,
+.dxsm-seo-editor > textarea {
+	box-sizing: border-box;
+	width: 100%;
+	margin: 0;
+}
+
+.dxsm-seo-editor :is(input, textarea):focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+
+.dxsm-seo-editor p {
+	margin: 0;
+}
+
+.dxsm-seo-editor > .description + .description {
+	margin-top: 8px;
+}
+
+.dxsm-seo-google {
+	min-width: 0;
+	margin: 0;
+}
+
+.dxsm-seo-modes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 16px;
+	margin: 4px 0 8px;
+}
+
+.dxsm-seo-modes label {
+	display: inline-flex;
+	align-items: center;
+	min-height: 32px;
+}
+
+.dxsm-seo-result,
+.dxsm-seo-card {
+	box-sizing: border-box;
+	border: 1px solid #c3c4c7;
+	border-radius: 8px;
+	background: #fff;
+	color: #202124;
+}
+
+.dxsm-seo-result {
+	max-width: 600px;
+	padding: 12px;
+}
+
+.dxsm-seo-result[data-mode="phone"] {
+	max-width: 360px;
+}
+
+.dxsm-seo-result [data-seo-preview] {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.dxsm-seo-result .dxsm-seo-title {
+	margin: 3px 0;
+	color: #1a0dab;
+	font-size: 20px;
+	line-height: 1.25;
+	-webkit-line-clamp: 1;
+}
+
+.dxsm-seo-result[data-mode="phone"] .dxsm-seo-title {
+	font-size: 18px;
+	-webkit-line-clamp: 2;
+}
+
+.dxsm-seo-result [data-seo-preview="description"] {
+	-webkit-line-clamp: 2;
+}
+
+.dxsm-seo-result[data-mode="phone"] [data-seo-preview="description"] {
+	-webkit-line-clamp: 3;
+}
+
+.dxsm-seo-url,
+.dxsm-seo-domain {
+	color: #50575e;
+}
+
+.dxsm-seo-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+	gap: 12px;
+	margin-top: 6px;
+}
+
+.dxsm-seo-card h3 {
+	margin: 0;
+	padding: 10px;
+	font-size: 14px;
+}
+
+.dxsm-seo-card img {
+	display: block;
+	width: 100%;
+	aspect-ratio: 1200 / 630;
+	object-fit: cover;
+}
+
+.dxsm-seo-card-text,
+.dxsm-seo-card .dxsm-seo-no-image {
+	padding: 8px 10px;
+}
+
+.dxsm-seo-card .dxsm-seo-no-image,
+.dxsm-seo-card--facebook .dxsm-seo-card-text {
+	background: #f0f2f5;
+}
+
+.dxsm-seo-card--linkedin .dxsm-seo-card-text {
+	background: #f3f2ef;
+}
+
+.dxsm-seo-card--x {
+	border-radius: 14px;
+}
+
+.dxsm-seo-card .dxsm-seo-title {
+	margin: 2px 0;
+	font-size: 15px;
+	font-weight: 600;
+}
