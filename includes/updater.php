@@ -18,13 +18,52 @@ final class Updater {
     public static function hooks() {
         // Nazwa filtra pochodzi z hosta w nagłówku Update URI pliku wtyczki.
         add_filter('update_plugins_d-x.pl', array(__CLASS__, 'check'), 10, 3);
+        // Na części hostingów (np. z wtyczką blokującą zapytania do wordpress.org) WordPress nie odświeża listy
+        // aktualizacji, więc filtr Update URI nie rusza. Wydanie dopisujemy też przy każdym odczycie tej listy.
+        add_filter('site_transient_update_plugins', array(__CLASS__, 'inject'));
         add_filter('plugins_api', array(__CLASS__, 'info'), 10, 3);
     }
 
-    public static function release($fresh = false) {
+    public static function inject($transient) {
+        if (!is_object($transient)) {
+            return $transient;
+        }
+        // Na froncie (np. pasek administratora) tylko pamięć podręczna: zapytanie do GitHuba robi panel albo cron.
+        $release = self::release(false, !is_admin() && !wp_doing_cron());
+        if (!$release) {
+            return $transient;
+        }
+        $file = plugin_basename(DXSM_PLUGIN_FILE);
+        $item = (object) array(
+            'id' => 'github.com/' . self::repo(),
+            'slug' => Plugin::SLUG,
+            'plugin' => $file,
+            'new_version' => $release['version'],
+            'url' => $release['url'],
+            'package' => $release['package'],
+            'requires_php' => '7.4',
+        );
+        $response = isset($transient->response) && is_array($transient->response) ? $transient->response : array();
+        $no_update = isset($transient->no_update) && is_array($transient->no_update) ? $transient->no_update : array();
+        if (version_compare($release['version'], VERSION, '>')) {
+            $response[$file] = $item;
+            unset($no_update[$file]);
+        } else {
+            $no_update[$file] = $item;
+            unset($response[$file]);
+        }
+        $transient->response = $response;
+        $transient->no_update = $no_update;
+        return $transient;
+    }
+
+    public static function release($fresh = false, $cache_only = false) {
         $cached = get_site_transient(self::CACHE);
         if (!$fresh && is_array($cached)) {
             return $cached ?: null;
+        }
+        if ($cache_only) {
+            return null;
         }
         $release = array();
         $repo = self::repo();

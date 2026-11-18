@@ -224,6 +224,24 @@ check(is_array($update) && $update['version'] === '9.8.7' && $update['package'] 
 check(apply_filters('update_plugins_d-x.pl', false, array(), 'ai-site-manager/ai-site-manager.php') === false, 'Other d-x.pl plugins are not answered.');
 $info = apply_filters('plugins_api', false, 'plugin_information', (object) array('slug' => 'digital-xperts-social-meta'));
 check(is_object($info) && $info->version === '9.8.7' && strpos($info->download_link, 'v9.8.7') !== false && !empty($info->sections['description']), 'Details window shows the release and readme.');
+// Lista aktualizacji nieodświeżana od miesięcy (blokada zapytań do wordpress.org): wydanie i tak się pojawia.
+$stale = (object) array('last_checked' => 1787126880, 'response' => array(), 'no_update' => array(), 'checked' => array());
+set_site_transient('update_plugins', $stale);
+$listed = get_site_transient('update_plugins');
+$file = 'digital-xperts-social-meta/digital-xperts-social-meta.php';
+check(isset($listed->response[$file]) && $listed->response[$file]->new_version === '9.8.7' && strpos($listed->response[$file]->package, 'v9.8.7') !== false, 'Release is injected into a stale update list.');
+delete_site_transient('update_plugins');
+// Na froncie bez zapamiętanego wydania nie ma zapytania do GitHuba.
+delete_site_transient(Updater::CACHE);
+$requests = 0;
+$count = function ($pre) use (&$requests) { $requests++; return $pre; };
+add_filter('pre_http_request', $count, 1);
+set_site_transient('update_plugins', $stale);
+$listed = get_site_transient('update_plugins');
+check($requests === 0 && !isset($listed->response[$file]), 'Front-end read of the update list makes no GitHub request.');
+remove_filter('pre_http_request', $count, 1);
+delete_site_transient('update_plugins');
+Updater::release(true);
 $core_link = '<a href="plugin-install.php?tab=plugin-information&plugin=digital-xperts-social-meta&section=changelog">Zobacz szczegóły</a>';
 check(apply_filters('plugin_row_meta', array($core_link), 'digital-xperts-social-meta/digital-xperts-social-meta.php', array(), 'all') === array($core_link), 'No duplicate details link when WordPress already added one.');
 remove_filter('pre_http_request', $fake, 10);
