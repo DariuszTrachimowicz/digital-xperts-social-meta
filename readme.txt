@@ -1,9 +1,9 @@
 === Digital Xperts Social Meta ===
 Contributors: digitalxperts
 Requires at least: 6.2
-Tested up to: 7.1.4
+Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 2.0.4
+Stable tag: 2.0.5
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -78,6 +78,10 @@ Nie wysyła treści ani danych osobowych. Raz na kilka godzin sprawdza na GitHub
 Wtyczka korzysta z danych zapisanych w WordPressie. Do sprawdzenia aktualizacji łączy się z github.com bez przesyłania danych strony. Panel czyta publiczną wersję strony z tego samego serwera.
 
 == Changelog ==
+
+= 2.0.5 =
+
+* Okno „Zobacz szczegóły” nie pokazuje już ostrzeżenia o braku testów z WordPressem 7.1.5: zgodność podana jako 7.2 (sprawdzone na 7.1.5 i 7.2 RC2).
 
 = 2.0.4 =
 

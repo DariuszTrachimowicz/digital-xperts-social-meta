@@ -226,6 +226,8 @@ check(is_object($info) && $info->version === DigitalXperts\SocialMeta\VERSION, '
 foreach (array('description', 'installation', 'faq', 'Prywatność', 'changelog') as $section) {
     check(!empty($info->sections[$section]), 'Details window needs section ' . $section . '.');
 }
+// install_plugin_information() ostrzega, gdy pełna wersja WordPressa jest nowsza niż "tested" (stan 7.1.5).
+check(version_compare(get_bloginfo('version'), $info->tested, '<=') && version_compare('7.1.5', $info->tested, '<='), 'Details window must not warn about an untested WordPress version.');
 check(strpos($info->sections['description'], '<h4>Co zyskujesz</h4><ul><li>') !== false, 'Readme headings and lists must render as HTML.');
 check(apply_filters('plugins_api', false, 'plugin_information', (object) array('slug' => 'akismet')) === false, 'Other plugin info must pass through.');
 // Wtyczka jak CMS Portal: na priorytecie 20 zwraca false dla każdego obcego sluga.
