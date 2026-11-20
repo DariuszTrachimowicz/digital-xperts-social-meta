@@ -3,7 +3,7 @@ Contributors: digitalxperts
 Requires at least: 6.2
 Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 2.3.0
+Stable tag: 2.4.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,6 +23,7 @@ Digital Xperts Social Meta to jedna wtyczka dla wszystkich stron. Pilnuje, co wy
 * Pole „Fraza kluczowa”, które sprawdza tytuł, opis, adres i treść, także gdy fraza jest odmieniona.
 * Podpowiedzi linków wewnętrznych: lista innych treści, których fraza kluczowa pada w pisanym tekście.
 * Kontrolę czytelności po polsku: długość zdań i akapitów, śródtytuły, wskaźnik mglistości.
+* Kontrolę stylu: pauzy, kontrasty „a nie”, słowa-wytrychy, rozbiegi i strona bierna.
 
 = Jak działa na stronie =
 
@@ -81,6 +82,12 @@ Nie wysyła treści ani danych osobowych. Raz na kilka godzin sprawdza na GitHub
 Wtyczka korzysta z danych zapisanych w WordPressie. Do sprawdzenia aktualizacji łączy się z github.com bez przesyłania danych strony. Panel czyta publiczną wersję strony z tego samego serwera.
 
 == Changelog ==
+
+= 2.4.0 =
+
+* Nowa lista „Styl i prosty język” w sekcji „Podgląd SEO” i w panelu Social Meta. Liczy pauzy i półpauzy, kontrasty „a nie” oraz „nie tylko, ale”, słowa-wytrychy („kluczowy”, „istotny”, „dedykowany” i podobne), rozbiegi typu „warto zauważyć” i stronę bierną z „został”.
+* Słowa-wytrychy są rozpoznawane w odmianie, a lista pokazuje, które padają najczęściej.
+* Kontrola nie zmienia nic na stronie publicznej.
 
 = 2.3.0 =
 

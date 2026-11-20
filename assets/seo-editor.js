@@ -53,6 +53,17 @@ function renderLinks(editor, page, body) {
 	}));
 }
 
+function renderChecks(list, checks) {
+	list?.replaceChildren(...checks.map((check) => {
+		const item = document.createElement('li');
+		const label = document.createElement('strong');
+		item.dataset.status = check.status;
+		label.textContent = LABELS[check.status];
+		item.append(label, ' ' + check.text);
+		return item;
+	}));
+}
+
 function renderReadability(editor, page) {
 	const list = editor.querySelector('[data-seo-readability]');
 	if (!list) {
@@ -69,14 +80,7 @@ function renderReadability(editor, page) {
 	const chunks = copy.textContent.replace(/\[\/?[a-z][a-z0-9_-]*[^\]]*\]/gi, ' ').split(/\n\s*\n/)
 		.map((text) => text.trim()).filter(Boolean)
 		.map((text) => ({ heading: text.startsWith(marker), text: text.replace(marker, '') }));
-	list.replaceChildren(...window.dxsmKeyphrase.readability(chunks).map((check) => {
-		const item = document.createElement('li');
-		const label = document.createElement('strong');
-		item.dataset.status = check.status;
-		label.textContent = LABELS[check.status];
-		item.append(label, ' ' + check.text);
-		return item;
-	}));
+	renderChecks(list, window.dxsmKeyphrase.readability(chunks));
 }
 
 function renderKeyphrase(editor) {
@@ -129,16 +133,10 @@ function renderKeyphrase(editor) {
 		firstParagraph: paragraph ? text(paragraph) : body.split(/\n\s*\n/).find((part) => part.trim()) || '',
 		headings: [...page.querySelectorAll('h2, h3, h4, h5, h6')].map(text),
 	});
-	list.replaceChildren(...checks.map((check) => {
-		const item = document.createElement('li');
-		const label = document.createElement('strong');
-		item.dataset.status = check.status;
-		label.textContent = LABELS[check.status];
-		item.append(label, ' ' + check.text);
-		return item;
-	}));
+	renderChecks(list, checks);
 	renderLinks(editor, page, body);
 	renderReadability(editor, page);
+	renderChecks(editor.querySelector('[data-seo-style]'), window.dxsmKeyphrase.style(body));
 }
 
 document.addEventListener('click', (event) => {

@@ -203,7 +203,41 @@
 		];
 	}
 
-	const api = { stem, sameWord, analyze, linkSuggestions, readability, syllables };
+	// Styl: ślady pisania przez AI i urzędowe nawyki, które da się policzyć bez słownika.
+	// shortcut: stałe progi niezależne od długości tekstu (dobrane na 53 wpisach po około 2300 słów); przeliczać na 1000 słów, gdy krótkie teksty zaczną dostawać fałszywe „Dobrze”.
+	const FILLERS = ['kluczowy', 'istotny', 'dedykowany', 'kompleksowy', 'innowacyjny', 'holistyczny', 'finalnie', 'ponadto'];
+	const LETTER = '[a-ząćęłńóśźż]';
+	const DASHES = new RegExp('[' + String.fromCharCode(8211, 8212) + ']', 'g');
+	const CONTRASTS = new RegExp(',\\s+a nie\\s|(^|[^a-ząćęłńóśźż])nie tylko\\s[^.!?]*?,\\s+(ale|lecz)\\s', 'gi');
+	const OPENERS = new RegExp('(^|[^a-ząćęłńóśźż])(warto (zauważyć|podkreślić|pamiętać|wspomnieć|zaznaczyć)|należy (pamiętać|podkreślić|zauważyć)|nie ulega wątpliwości|w dzisiejszych czasach|w dobie|co więcej|podsumowując|nie da się ukryć)(?!' + LETTER + ')', 'gi');
+	// Imiesłów może stać do dwóch słów za „został” („została wczoraj podpisana”). Końcówki są długie, żeby „zostały nam dwa dni” nie liczyło się jako strona bierna.
+	const PASSIVE = new RegExp('(^|[^a-ząćęłńóśźż])(został[aoy]?|zostali|zostanie|zostaną|zostać)\\s+(?:' + LETTER + '+\\s+){0,2}?' + LETTER + '{3,}(any|ana|ane|ani|ony|ona|one|eni|ęty|ęta|ęte|ęci|ty|ta|te)(?!' + LETTER + ')', 'gi');
+
+	function style(text) {
+		// Każdy odstęp, także spacja nierozdzielająca po „a” i „w”, staje się zwykłą spacją, żeby wzorce jej nie gubiły.
+		const source = String(text || '').replace(/\s+/g, ' ');
+		const tokens = words(source);
+		if (tokens.length < 50) {
+			return [{ status: 'uwaga', text: 'Za mało tekstu, żeby ocenić styl (mniej niż 50 słów).' }];
+		}
+		const count = (pattern) => (source.match(pattern) || []).length;
+		const fillers = FILLERS.map((filler) => [filler, tokens.filter((token) => sameWord(filler, token)).length]).filter(([, hits]) => hits).sort((first, second) => second[1] - first[1]);
+		const fillerCount = fillers.reduce((sum, [, hits]) => sum + hits, 0);
+		const dashes = count(DASHES);
+		const contrasts = count(CONTRASTS);
+		const openers = count(OPENERS);
+		const passive = count(PASSIVE);
+		const check = (ok, good, bad) => ({ status: ok ? 'ok' : 'uwaga', text: ok ? good : bad });
+		return [
+			check(!dashes, 'Pauzy i półpauzy: brak.', 'Pauzy i półpauzy: ' + dashes + '. Zamień je na przecinek, dwukropek albo kropkę.'),
+			check(contrasts < 3, 'Kontrasty „a nie” i „nie tylko, ale”: ' + contrasts + '.', 'Kontrasty „a nie” i „nie tylko, ale”: ' + contrasts + '. Napisz wprost, co jest, bez zaprzeczania.'),
+			check(fillerCount < 3, 'Słowa-wytrychy: ' + fillerCount + '.', 'Słowa-wytrychy: ' + fillers.map(([filler, hits]) => filler + ' ×' + hits).join(', ') + '. Zamień je na konkret.'),
+			check(!openers, 'Rozbiegi typu „warto zauważyć”: brak.', 'Rozbiegi typu „warto zauważyć”: ' + openers + '. Zacznij zdanie od treści.'),
+			check(passive < 3, 'Strona bierna z „został”: ' + passive + '.', 'Strona bierna z „został”: ' + passive + '. Napisz, kto co robi.'),
+		];
+	}
+
+	const api = { stem, sameWord, analyze, linkSuggestions, readability, syllables, style };
 	if (typeof module !== 'undefined' && module.exports) {
 		module.exports = api;
 	} else {

@@ -100,4 +100,28 @@ assert.deepStrictEqual(readability(manyLines), readability(oneLine));
 const longOne = 'słowo '.repeat(21).trim() + '. ';
 const shortOne = 'Ala ma kota. ';
 assert.strictEqual(readability([{ heading: false, text: 'Start. ' + (longOne.replace('słowo', 'Słowo')).repeat(17) + shortOne.repeat(49) }])[0].status, 'uwaga');
+// Styl: pauzy, kontrasty, słowa-wytrychy w odmianie, rozbiegi, strona bierna.
+const { style } = require('../assets/keyphrase.js');
+assert.deepStrictEqual(style('Krótki tekst.'), [{ status: 'uwaga', text: 'Za mało tekstu, żeby ocenić styl (mniej niż 50 słów).' }]);
+const filler = 'Ala ma kota, a kot ma dom. Pies śpi w budzie obok domu. ';
+const plainStyle = style(filler.repeat(6));
+assert.deepStrictEqual(plainStyle.map((check) => check.status), ['ok', 'ok', 'ok', 'ok', 'ok']);
+assert.strictEqual(plainStyle[2].text, 'Słowa-wytrychy: 0.');
+const pause = String.fromCharCode(8212);
+const marked = style(filler.repeat(5) + 'To kluczowy krok ' + pause + ' i kluczowa zmiana, a nie drobiazg. Warto zauważyć, że dedykowane narzędzie zostało wdrożone, a nie kupione. '
+	+ 'Nie tylko planujemy, ale też liczymy. Raport został wysłany. Plik zostanie sprawdzony. Co więcej, istotnych uwag brak. Zostały nam dwa dni.');
+assert.deepStrictEqual(marked.map((check) => check.status), ['uwaga', 'uwaga', 'uwaga', 'uwaga', 'uwaga']);
+assert.strictEqual(marked[0].text, 'Pauzy i półpauzy: 1. Zamień je na przecinek, dwukropek albo kropkę.');
+assert.ok(marked[1].text.startsWith('Kontrasty „a nie” i „nie tylko, ale”: 3.'));
+assert.strictEqual(marked[2].text, 'Słowa-wytrychy: kluczowy ×2, istotny ×1, dedykowany ×1. Zamień je na konkret.');
+assert.ok(marked[3].text.startsWith('Rozbiegi typu „warto zauważyć”: 2.'));
+assert.ok(marked[4].text.startsWith('Strona bierna z „został”: 3.'));
+const passive = style(filler.repeat(6) + 'Projekt został już zatwierdzony. Umowa została wczoraj podpisana. Środki zostały w całości przyznane. Zostały nam dwa dni. W piątek odbędzie się spotkanie podsumowujące rok szkolny.');
+assert.ok(passive[4].text.startsWith('Strona bierna z „został”: 3.'));
+assert.strictEqual(passive[3].status, 'ok');
+// Spacja nierozdzielająca po „a” i w rozbiegu daje ten sam wynik co zwykła.
+const hard = String.fromCharCode(160);
+const spaced = filler.repeat(6) + 'Wybierz plik, a nie folder. Podaj datę, a nie godzinę. Zapisz numer, a nie nazwę. Warto zauważyć resztę.';
+assert.ok(style(spaced)[1].text.startsWith('Kontrasty „a nie” i „nie tylko, ale”: 3.'));
+assert.deepStrictEqual(style(spaced.replace(/, a nie/g, ', a' + hard + 'nie').replace('Warto zauważyć', 'Warto' + hard + 'zauważyć')), style(spaced));
 console.log('keyphrase: OK');

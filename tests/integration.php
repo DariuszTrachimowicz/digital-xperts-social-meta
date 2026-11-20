@@ -212,7 +212,7 @@ update_post_meta($draft, '_dxsm_seo_keyphrase', 'szkic');
 $candidates = dxsm_link_candidates($seo);
 check(count($candidates) === 1 && $candidates[0]['title'] === 'Terapia par & rodzin' && $candidates[0]['url'] === get_permalink($linked) && $candidates[0]['phrase'] === 'terapia </script> par', 'Link candidates are other published content with a keyphrase.');
 ob_start(); dxsm_render_seo_metabox(get_post($seo)); $links_box = ob_get_clean();
-check(strpos($links_box, 'data-seo-readability') !== false && strpos($links_box, 'data-seo-links') !== false && strpos($links_box, 'data-seo-link-candidates>[{') !== false && substr_count($links_box, '</script>') === 1 && strpos($links_box, 'terapia \\u003C\\/script\\u003E par') !== false, 'Link candidates must be embedded as safe JSON.');
+check(strpos($links_box, 'data-seo-style') !== false && strpos($links_box, 'data-seo-readability') !== false && strpos($links_box, 'data-seo-links') !== false && strpos($links_box, 'data-seo-link-candidates>[{') !== false && substr_count($links_box, '</script>') === 1 && strpos($links_box, 'terapia \\u003C\\/script\\u003E par') !== false, 'Link candidates must be embedded as safe JSON.');
 register_post_type('dxsm_internal', array('public' => false, 'label' => 'Internal'));
 $internal = wp_insert_post(array('post_title' => 'Wewnętrzna notatka', 'post_status' => 'publish', 'post_type' => 'dxsm_internal'));
 update_post_meta($internal, '_dxsm_seo_keyphrase', 'notatka');
