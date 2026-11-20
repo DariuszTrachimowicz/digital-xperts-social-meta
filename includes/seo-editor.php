@@ -249,6 +249,8 @@ function dxsm_render_seo_fields( $preview ) {
 			<p id="dxsm-seo-keyphrase-help" class="description">Wpisz słowa, pod które piszesz tę treść. Odmiana liczy się sama: „usługa” znajdzie też „usługi” i „usłudze”.</p>
 			<ul class="dxsm-seo-keyphrase" data-seo-keyphrase-checks aria-live="polite"></ul>
 			<textarea hidden data-seo-content data-url="<?php echo esc_url( $preview['url'] ); ?>" data-post-title="<?php echo esc_attr( $preview['post_title'] ); ?>"<?php echo null === $preview['slug'] ? '' : ' data-slug="' . esc_attr( $preview['slug'] ) . '"'; ?>><?php echo esc_textarea( $preview['content'] ); ?></textarea>
+			<p id="dxsm-seo-readability-title"><strong>Czytelność</strong></p>
+			<ul class="dxsm-seo-keyphrase" data-seo-readability aria-labelledby="dxsm-seo-readability-title" aria-live="polite"></ul>
 			<p id="dxsm-seo-links-title"><strong>Podpowiedzi linków wewnętrznych</strong></p>
 			<ul class="dxsm-seo-links" data-seo-links aria-labelledby="dxsm-seo-links-title" aria-live="polite"></ul>
 			<script type="application/json" data-seo-link-candidates><?php echo wp_json_encode( $preview['link_candidates'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE ); ?></script>

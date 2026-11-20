@@ -53,6 +53,32 @@ function renderLinks(editor, page, body) {
 	}));
 }
 
+function renderReadability(editor, page) {
+	const list = editor.querySelector('[data-seo-readability]');
+	if (!list) {
+		return;
+	}
+
+	// Śródtytuły dostają znacznik, żeby po zamianie treści na tekst dało się odróżnić je od akapitów.
+	const marker = String.fromCharCode(1);
+	const copy = page.body.cloneNode(true);
+	copy.querySelectorAll('h2, h3, h4, h5, h6').forEach((heading) => {
+		heading.textContent = '\n\n' + marker + heading.textContent;
+	});
+	// Skróty wtyczek w nawiasach kwadratowych nie są tekstem do czytania.
+	const chunks = copy.textContent.replace(/\[\/?[a-z][a-z0-9_-]*[^\]]*\]/gi, ' ').split(/\n\s*\n/)
+		.map((text) => text.trim()).filter(Boolean)
+		.map((text) => ({ heading: text.startsWith(marker), text: text.replace(marker, '') }));
+	list.replaceChildren(...window.dxsmKeyphrase.readability(chunks).map((check) => {
+		const item = document.createElement('li');
+		const label = document.createElement('strong');
+		item.dataset.status = check.status;
+		label.textContent = LABELS[check.status];
+		item.append(label, ' ' + check.text);
+		return item;
+	}));
+}
+
 function renderKeyphrase(editor) {
 	const list = editor.querySelector('[data-seo-keyphrase-checks]');
 	if (!list) {
@@ -112,6 +138,7 @@ function renderKeyphrase(editor) {
 		return item;
 	}));
 	renderLinks(editor, page, body);
+	renderReadability(editor, page);
 }
 
 document.addEventListener('click', (event) => {

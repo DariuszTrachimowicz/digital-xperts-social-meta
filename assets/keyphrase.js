@@ -156,7 +156,54 @@
 		].filter(Boolean);
 	}
 
-	const api = { stem, sameWord, analyze, linkSuggestions };
+	// Sylaby liczymy po samogłoskach; „i” przed samogłoską tylko zmiękcza (nie, ziemia).
+	// shortcut: dwugłoski z wyrazów obcych (au, eu) liczą się jako dwie sylaby; słownik, gdy wskaźnik mglistości zacznie wyraźnie zawyżać.
+	function syllables(word) {
+		const vowels = word.toLowerCase().replace(/i(?=[aeouyąęó])/g, '').match(/[aeiouyąęó]/g);
+		return vowels ? vowels.length : 1;
+	}
+
+	// Progi długości zdań, akapitów i fragmentów bez śródtytułu są takie jak w popularnych analizatorach SEO (20, 150 i 300 słów).
+	// Mglistość to indeks FOG w polskiej wersji: 0,4 × (średnia długość zdania + odsetek słów o co najmniej czterech sylabach).
+	function readability(chunks) {
+		// Pojedyncze przejście do nowego wiersza w akapicie (edytor klasyczny) nie kończy zdania.
+		const paragraphs = chunks.filter((chunk) => !chunk.heading).map((chunk) => chunk.text.replace(/\s*\n\s*/g, ' '));
+		const all = paragraphs.flatMap(words);
+		if (all.length < 50) {
+			return [{ status: 'uwaga', text: 'Za mało tekstu, żeby ocenić czytelność (mniej niż 50 słów).' }];
+		}
+		const parts = paragraphs.flatMap(sentences).map(words).filter((tokens) => tokens.length);
+		const long = parts.filter((tokens) => tokens.length > 20).length;
+		const share = Math.round((100 * long) / parts.length);
+		const longest = Math.max(...parts.map((tokens) => tokens.length));
+		const bigParagraphs = paragraphs.filter((text) => words(text).length > 150).length;
+		let section = 0;
+		let current = 0;
+		for (const chunk of chunks) {
+			current = chunk.heading ? 0 : current + words(chunk.text).length;
+			section = Math.max(section, current);
+		}
+		const hard = all.filter((word) => /[a-ząćęłńóśźż]/.test(word) && syllables(word) >= 4).length;
+		const fog = Math.round(4 * (all.length / parts.length + (100 * hard) / all.length)) / 10;
+		const level = fog < 7 ? 'bardzo prosty' : fog < 10 ? 'prosty' : fog < 13 ? 'na poziomie szkoły średniej' : fog < 18 ? 'na poziomie studiów' : 'specjalistyczny';
+		let repeats = 0;
+		parts.forEach((tokens, index) => {
+			if (index > 1 && tokens[0] === parts[index - 1][0] && tokens[0] === parts[index - 2][0] && (index < 3 || parts[index - 3][0] !== tokens[0])) {
+				repeats++;
+			}
+		});
+		const check = (ok, good, bad) => ({ status: ok ? 'ok' : 'uwaga', text: ok ? good : bad });
+		const number = (value) => String(value).replace('.', ',');
+		return [
+			check(long * 4 <= parts.length, 'Zdania: ' + share + ' % ma ponad 20 słów, najdłuższe ma ' + longest + '.', 'Zdania: ' + share + ' % ma ponad 20 słów, najdłuższe ma ' + longest + '. Skróć je, żeby długich było najwyżej 25 %.'),
+			check(!bigParagraphs, 'Akapity: żaden nie ma ponad 150 słów.', 'Akapity z ponad 150 słowami: ' + bigParagraphs + '. Podziel je na krótsze.'),
+			check(section <= 300, 'Śródtytuły: najdłuższy fragment bez śródtytułu (słów: ' + section + ').', 'Śródtytuły: najdłuższy fragment bez śródtytułu (słów: ' + section + '). Dodaj śródtytuł, żeby żaden fragment nie miał ponad 300 słów.'),
+			check(fog < 13, 'Mglistość (FOG): ' + number(fog) + ', tekst ' + level + '.', 'Mglistość (FOG): ' + number(fog) + ', tekst ' + level + '. Skróć zdania i zamień długie słowa na prostsze.'),
+			check(!repeats, 'Początki zdań: bez powtórzeń trzy razy z rzędu.', 'Początki zdań: ' + repeats + (repeats === 1 ? ' raz' : ' razy') + ' trzy kolejne zdania zaczynają się tym samym słowem.'),
+		];
+	}
+
+	const api = { stem, sameWord, analyze, linkSuggestions, readability, syllables };
 	if (typeof module !== 'undefined' && module.exports) {
 		module.exports = api;
 	} else {
