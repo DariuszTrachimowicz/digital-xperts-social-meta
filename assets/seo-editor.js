@@ -1,5 +1,58 @@
 const LABELS = { ok: 'Dobrze', brak: 'Brak', uwaga: 'Uwaga' };
 
+function renderLinks(editor, page, body) {
+	const list = editor.querySelector('[data-seo-links]');
+	const source = editor.querySelector('[data-seo-link-candidates]');
+	if (!list || !source) {
+		return;
+	}
+
+	const all = JSON.parse(source.textContent || '[]');
+	// Odsyłacze względne i kotwice (#koszt) liczą się od adresu edytowanej treści, nie od adresu panelu.
+	const own = editor.querySelector('[data-seo-content]').dataset.url || window.location.href;
+	// Ten sam wpis może być podlinkowany adresem pełnym albo względnym, z www albo bez, z ukośnikiem na końcu albo bez.
+	// Z parametrów liczą się tylko te, które wskazują wpis (?p=123); parametry śledzące nie zmieniają celu linku.
+	const address = (href) => {
+		try {
+			const url = new URL(href, own);
+			const id = ['p', 'page_id'].map((key) => (url.searchParams.get(key) ? key + '=' + url.searchParams.get(key) : '')).join('');
+			return url.host.replace(/^www\./, '') + url.pathname.replace(/\/+$/, '') + '?' + id;
+		} catch {
+			return '';
+		}
+	};
+	const linked = new Set([...page.querySelectorAll('a[href]')].map((link) => address(link.getAttribute('href'))));
+	const found = window.dxsmKeyphrase.linkSuggestions(body, all.filter((candidate) => !linked.has(address(candidate.url))));
+	if (!found.length) {
+		const empty = document.createElement('li');
+		empty.textContent = all.length
+			? 'Brak podpowiedzi: frazy kluczowe innych treści nie padają w tym tekście albo te treści są już podlinkowane.'
+			: 'Podpowiedzi pojawią się, gdy inne treści dostaną frazę kluczową.';
+		list.replaceChildren(empty);
+		return;
+	}
+	list.replaceChildren(...found.map((suggestion) => {
+		const item = document.createElement('li');
+		const link = document.createElement('a');
+		const where = document.createElement('span');
+		link.href = suggestion.url;
+		link.target = '_blank';
+		link.rel = 'noopener';
+		link.textContent = suggestion.title;
+		where.textContent = 'Fraza „' + suggestion.phrase + '” pada w zdaniu: „' + suggestion.sentence.slice(0, 160) + (suggestion.sentence.length > 160 ? '…' : '') + '”';
+		item.append(link, where);
+		if (navigator.clipboard) {
+			const copy = document.createElement('button');
+			copy.type = 'button';
+			copy.className = 'button button-small';
+			copy.dataset.seoCopy = suggestion.url;
+			copy.textContent = 'Kopiuj adres';
+			item.append(copy);
+		}
+		return item;
+	}));
+}
+
 function renderKeyphrase(editor) {
 	const list = editor.querySelector('[data-seo-keyphrase-checks]');
 	if (!list) {
@@ -58,7 +111,17 @@ function renderKeyphrase(editor) {
 		item.append(label, ' ' + check.text);
 		return item;
 	}));
+	renderLinks(editor, page, body);
 }
+
+document.addEventListener('click', (event) => {
+	const copy = event.target.closest?.('[data-seo-copy]');
+	if (copy) {
+		navigator.clipboard.writeText(copy.dataset.seoCopy).then(() => {
+			copy.textContent = 'Skopiowano';
+		});
+	}
+});
 
 document.addEventListener('input', (event) => {
 	const field = event.target;

@@ -143,6 +143,37 @@ function dxsm_get_editor_automatic_title( $post, $is_static_front ) {
 	return apply_filters( 'document_title', implode( " $separator ", array_filter( $parts ) ) );
 }
 
+// Inne opublikowane treści z frazą kluczową: materiał do podpowiedzi linków wewnętrznych.
+function dxsm_link_candidates( $post_id ) {
+	// Tylko typy treści z publiczną stroną: filtr dxsm_seo_post_types może dopisać typ wewnętrzny, a jego tytuły nie mogą trafić do edytora innych treści.
+	$types = array_values( array_filter( dxsm_seo_post_types(), 'is_post_type_viewable' ) );
+	if ( ! $types ) {
+		return array();
+	}
+	$ids = get_posts(
+		array(
+			'post_type'      => $types,
+			'post_status'    => 'publish',
+			'has_password'   => false,
+			// shortcut: najnowsze 300 treści z frazą trafia do przeglądarki; przy większych serwisach wybierać kandydatów po stronie serwera.
+			'posts_per_page' => 300,
+			'post__not_in'   => array( (int) $post_id ),
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+			'meta_query'     => array( array( 'key' => '_dxsm_seo_keyphrase', 'value' => '', 'compare' => '!=' ) ),
+		)
+	);
+	$candidates = array();
+	foreach ( $ids as $id ) {
+		$candidates[] = array(
+			'title'  => html_entity_decode( get_the_title( $id ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
+			'url'    => get_permalink( $id ),
+			'phrase' => (string) get_post_meta( $id, '_dxsm_seo_keyphrase', true ),
+		);
+	}
+	return $candidates;
+}
+
 function dxsm_get_seo_preview_data( $post ) {
 	if ( ! $post ) {
 		return array(
@@ -156,6 +187,7 @@ function dxsm_get_seo_preview_data( $post ) {
 			'slug'                  => '',
 			'content'               => '',
 			'post_title'            => '',
+			'link_candidates'       => array(),
 		);
 	}
 
@@ -177,6 +209,7 @@ function dxsm_get_seo_preview_data( $post ) {
 		'slug'                  => $is_static_front || '' === $post->post_name || false === strpos( (string) get_permalink( $post ), '/' . $post->post_name ) ? null : $post->post_name,
 		'content'               => $post->post_content,
 		'post_title'            => $post->post_title,
+		'link_candidates'       => dxsm_link_candidates( $post_id ),
 	);
 }
 
@@ -215,7 +248,10 @@ function dxsm_render_seo_fields( $preview ) {
 				value="<?php echo dxsm_escape_seo_text( $preview['keyphrase'] ); ?>" aria-describedby="dxsm-seo-keyphrase-help">
 			<p id="dxsm-seo-keyphrase-help" class="description">Wpisz słowa, pod które piszesz tę treść. Odmiana liczy się sama: „usługa” znajdzie też „usługi” i „usłudze”.</p>
 			<ul class="dxsm-seo-keyphrase" data-seo-keyphrase-checks aria-live="polite"></ul>
-			<textarea hidden data-seo-content data-post-title="<?php echo esc_attr( $preview['post_title'] ); ?>"<?php echo null === $preview['slug'] ? '' : ' data-slug="' . esc_attr( $preview['slug'] ) . '"'; ?>><?php echo esc_textarea( $preview['content'] ); ?></textarea>
+			<textarea hidden data-seo-content data-url="<?php echo esc_url( $preview['url'] ); ?>" data-post-title="<?php echo esc_attr( $preview['post_title'] ); ?>"<?php echo null === $preview['slug'] ? '' : ' data-slug="' . esc_attr( $preview['slug'] ) . '"'; ?>><?php echo esc_textarea( $preview['content'] ); ?></textarea>
+			<p id="dxsm-seo-links-title"><strong>Podpowiedzi linków wewnętrznych</strong></p>
+			<ul class="dxsm-seo-links" data-seo-links aria-labelledby="dxsm-seo-links-title" aria-live="polite"></ul>
+			<script type="application/json" data-seo-link-candidates><?php echo wp_json_encode( $preview['link_candidates'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE ); ?></script>
 		<?php endif; ?>
 	<?php
 }

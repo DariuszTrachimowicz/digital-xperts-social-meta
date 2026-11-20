@@ -161,3 +161,22 @@
 .dxsm-seo-keyphrase li[data-status="uwaga"] {
 	border-left-color: #dba617;
 }
+
+.dxsm-seo-links {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dxsm-seo-links li {
+	display: grid;
+	gap: 4px;
+	justify-items: start;
+	margin: 0;
+	padding: 8px 0;
+	border-top: 1px solid #dcdcde;
+}
+
+.dxsm-seo-links a {
+	font-weight: 600;
+}

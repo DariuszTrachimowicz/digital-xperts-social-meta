@@ -1,7 +1,7 @@
 // Fraza kluczowa: node tests/keyphrase.test.js
 // odmiana.json: formy z trzech wpisów, których nie było przy pisaniu stemmera, z lematami ze słownika Morfeusz.
 const assert = require('assert');
-const { sameWord, analyze } = require('../assets/keyphrase.js');
+const { sameWord, analyze, linkSuggestions } = require('../assets/keyphrase.js');
 
 const score = {};
 for (const [form, lemma, kind] of require('./odmiana.json')) {
@@ -61,4 +61,17 @@ assert.strictEqual(analyze({ ...input, phrase: 'serwis Citroen', slug: 'serwis-c
 assert.strictEqual(analyze({ ...input, phrase: 'płatności BLIK', text: 'Akceptujemy płatności mobilne, np. BLIK. Inne też.' })[5].status, 'uwaga');
 assert.ok(analyze({ ...input, phrase: 'płatności BLIK', text: 'Akceptujemy płatności mobilne, np. BLIK. Inne też.' })[5].text.startsWith('Fraza pada w treści 1 raz'));
 assert.strictEqual(analyze({ ...input, phrase: 'serwis laptopa', text: 'Naprawiamy laptopy, monitory itp. Serwis jest czynny w soboty.' })[5].text, 'Słowa frazy padają w treści, ale ani razu w jednym zdaniu.');
+// Podpowiedzi linków: słowa frazy muszą stać obok siebie (najwyżej jedno obce słowo między nimi).
+const others = [
+	{ title: 'Strona usługi', url: '/strona-uslugi/', phrase: 'strona usługi' },
+	{ title: 'Kopia zapasowa', url: '/kopia/', phrase: 'kopia zapasowa strony' },
+	{ title: 'Budżet', url: '/budzet/', phrase: 'budżet Google Ads' },
+	{ title: 'Bez frazy', url: '/pusty/', phrase: ' ' },
+];
+const article = 'Dla strony usługi przygotuj zakres. Na stronach każdej usługi dopisz cenę. Sprawdź stronę umowy, warunki i regulamin usługi. Rób też kopię zapasową całej strony.';
+const hints = linkSuggestions(article, others);
+assert.deepStrictEqual(hints.map((hint) => [hint.url, hint.count]), [['/strona-uslugi/', 2], ['/kopia/', 1]]);
+assert.strictEqual(hints[0].sentence, 'Dla strony usługi przygotuj zakres');
+assert.strictEqual(linkSuggestions(article, others, 1).length, 1);
+assert.deepStrictEqual(linkSuggestions('', others), []);
 console.log('keyphrase: OK');

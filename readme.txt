@@ -3,7 +3,7 @@ Contributors: digitalxperts
 Requires at least: 6.2
 Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 2.1.1
+Stable tag: 2.2.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,6 +21,7 @@ Digital Xperts Social Meta to jedna wtyczka dla wszystkich stron. Pilnuje, co wy
 * Podgląd wszystkich danych strukturalnych JSON-LD odczytanych z publicznej strony.
 * Sekcję „Podgląd SEO” w edycji wpisu i strony.
 * Pole „Fraza kluczowa”, które sprawdza tytuł, opis, adres i treść, także gdy fraza jest odmieniona.
+* Podpowiedzi linków wewnętrznych: lista innych treści, których fraza kluczowa pada w pisanym tekście.
 
 = Jak działa na stronie =
 
@@ -79,6 +80,12 @@ Nie wysyła treści ani danych osobowych. Raz na kilka godzin sprawdza na GitHub
 Wtyczka korzysta z danych zapisanych w WordPressie. Do sprawdzenia aktualizacji łączy się z github.com bez przesyłania danych strony. Panel czyta publiczną wersję strony z tego samego serwera.
 
 == Changelog ==
+
+= 2.2.0 =
+
+* Nowa lista „Podpowiedzi linków wewnętrznych” pod polem frazy kluczowej. Pokazuje do pięciu innych treści, których fraza kluczowa pada w edytowanym tekście, razem ze zdaniem, w którym można wstawić link, i przyciskiem kopiowania adresu.
+* Podpowiedzi rozumieją polską odmianę i pomijają treści, do których tekst już linkuje.
+* Podpowiadane są tylko treści z wpisaną frazą kluczową, więc lista rośnie razem z liczbą uzupełnionych fraz.
 
 = 2.1.1 =
 

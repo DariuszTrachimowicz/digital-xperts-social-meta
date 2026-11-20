@@ -96,6 +96,33 @@
 		return Math.min(...phrase.map((word) => tokens.filter((token) => same(word, token)).length));
 	}
 
+	// Zdanie kończy się przed wielką literą albo nowym wierszem, więc „np.” go nie przerywa.
+	// Skróty, po których zdanie biegnie dalej, tracą kropkę przed podziałem („np. BLIK”). „itd.” i „itp.” zostają, bo zwykle kończą zdanie.
+	function sentences(text) {
+		return String(text || '').replace(/(^|[^a-ząćęłńóśźż])(np|tzw|tj|tzn|m\.in|ul|al|dr|prof|inż|mgr|wg|nr|godz)\.(?=\s)/gi, '$1$2').split(/[.!?]+\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ0-9„"])|\n+/);
+	}
+
+	// Podpowiedzi linków wewnętrznych: fraza kluczowa innej treści pada w tym tekście, a jej słowa stoją obok siebie.
+	// shortcut: między słowami frazy może stać jedno obce słowo; szersze okno dawało przypadkowe trafienia, poszerzyć przy skargach na brak podpowiedzi.
+	function linkSuggestions(text, candidates, limit = 5) {
+		const parts = sentences(text).map((sentence) => ({ sentence: sentence.replace(/\s+/g, ' ').trim(), tokens: words(sentence) }));
+		const found = [];
+		for (const candidate of candidates) {
+			const phrase = phraseWords(candidate.phrase);
+			if (!phrase.length) {
+				continue;
+			}
+			const matches = parts.filter(({ tokens }) => tokens.some((token, start) => {
+				const span = tokens.slice(start, start + phrase.length + 1);
+				return phrase.every((word) => span.some((other) => sameWord(word, other)));
+			}));
+			if (matches.length) {
+				found.push({ ...candidate, count: matches.length, sentence: matches[0].sentence });
+			}
+		}
+		return found.sort((first, second) => second.count - first.count).slice(0, limit);
+	}
+
 	function analyze(input) {
 		const phrase = phraseWords(input.phrase);
 		if (!phrase.length) {
@@ -103,10 +130,7 @@
 		}
 		const has = (text) => hits(phrase, words(text)) > 0;
 		const all = words(input.text);
-		// Zdanie kończy się przed wielką literą albo nowym wierszem, więc „np.” go nie przerywa.
-		// Skróty, po których zdanie biegnie dalej, tracą kropkę przed podziałem („np. BLIK”). „itd.” i „itp.” zostają, bo zwykle kończą zdanie.
-		const inSentences = (text) => String(text || '').replace(/(^|[^a-ząćęłńóśźż])(np|tzw|tj|tzn|m\.in|ul|al|dr|prof|inż|mgr|wg|nr|godz)\.(?=\s)/gi, '$1$2').split(/[.!?]+\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ0-9„"])|\n+/)
-			.reduce((sum, sentence) => sum + hits(phrase, words(sentence)), 0);
+		const inSentences = (text) => sentences(text).reduce((sum, sentence) => sum + hits(phrase, words(sentence)), 0);
 		const count = inSentences(input.text);
 		const found = 'Fraza pada w treści ' + count + (count === 1 ? ' raz' : ' razy') + ' (słów w treści: ' + all.length + ').';
 		const check = (ok, good, bad) => ({ status: ok ? 'ok' : 'brak', text: ok ? good : bad });
@@ -132,7 +156,7 @@
 		].filter(Boolean);
 	}
 
-	const api = { stem, sameWord, analyze };
+	const api = { stem, sameWord, analyze, linkSuggestions };
 	if (typeof module !== 'undefined' && module.exports) {
 		module.exports = api;
 	} else {
