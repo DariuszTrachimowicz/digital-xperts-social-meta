@@ -204,7 +204,7 @@
 	}
 
 	// Styl: ślady pisania przez AI i urzędowe nawyki, które da się policzyć bez słownika.
-	// shortcut: stałe progi niezależne od długości tekstu (dobrane na 53 wpisach po około 2300 słów); przeliczać na 1000 słów, gdy krótkie teksty zaczną dostawać fałszywe „Dobrze”.
+	// Progi kontrastów, słów-wytrychów i strony biernej rosną z długością tekstu: 3 trafienia, a powyżej 2000 słów 1,5 trafienia na każde 1000 słów.
 	const FILLERS = ['kluczowy', 'istotny', 'dedykowany', 'kompleksowy', 'innowacyjny', 'holistyczny', 'finalnie', 'ponadto'];
 	const LETTER = '[a-ząćęłńóśźż]';
 	const DASHES = new RegExp('[' + String.fromCharCode(8211, 8212) + ']', 'g');
@@ -228,12 +228,13 @@
 		const openers = count(OPENERS);
 		const passive = count(PASSIVE);
 		const check = (ok, good, bad) => ({ status: ok ? 'ok' : 'uwaga', text: ok ? good : bad });
+		const limit = Math.max(3, Math.round((tokens.length * 1.5) / 1000));
 		return [
 			check(!dashes, 'Pauzy i półpauzy: brak.', 'Pauzy i półpauzy: ' + dashes + '. Zamień je na przecinek, dwukropek albo kropkę.'),
-			check(contrasts < 3, 'Kontrasty „a nie” i „nie tylko, ale”: ' + contrasts + '.', 'Kontrasty „a nie” i „nie tylko, ale”: ' + contrasts + '. Napisz wprost, co jest, bez zaprzeczania.'),
-			check(fillerCount < 3, 'Słowa-wytrychy: ' + fillerCount + '.', 'Słowa-wytrychy: ' + fillers.map(([filler, hits]) => filler + ' ×' + hits).join(', ') + '. Zamień je na konkret.'),
+			check(contrasts < limit, 'Kontrasty „a nie” i „nie tylko, ale”: ' + contrasts + '.', 'Kontrasty „a nie” i „nie tylko, ale”: ' + contrasts + '. Napisz wprost, co jest, bez zaprzeczania.'),
+			check(fillerCount < limit, 'Słowa-wytrychy: ' + fillerCount + '.', 'Słowa-wytrychy: ' + fillers.map(([filler, hits]) => filler + ' ×' + hits).join(', ') + '. Zamień je na konkret.'),
 			check(!openers, 'Rozbiegi typu „warto zauważyć”: brak.', 'Rozbiegi typu „warto zauważyć”: ' + openers + '. Zacznij zdanie od treści.'),
-			check(passive < 3, 'Strona bierna z „został”: ' + passive + '.', 'Strona bierna z „został”: ' + passive + '. Napisz, kto co robi.'),
+			check(passive < limit, 'Strona bierna z „został”: ' + passive + '.', 'Strona bierna z „został”: ' + passive + '. Napisz, kto co robi.'),
 		];
 	}
 

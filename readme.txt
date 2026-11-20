@@ -3,7 +3,7 @@ Contributors: digitalxperts
 Requires at least: 6.2
 Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 2.4.0
+Stable tag: 2.5.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,6 +24,7 @@ Digital Xperts Social Meta to jedna wtyczka dla wszystkich stron. Pilnuje, co wy
 * Podpowiedzi linków wewnętrznych: lista innych treści, których fraza kluczowa pada w pisanym tekście.
 * Kontrolę czytelności po polsku: długość zdań i akapitów, śródtytuły, wskaźnik mglistości.
 * Kontrolę stylu: pauzy, kontrasty „a nie”, słowa-wytrychy, rozbiegi i strona bierna.
+* Przekierowania starych adresów na nowe i import danych z Yoast SEO.
 
 = Jak działa na stronie =
 
@@ -49,7 +50,7 @@ Wtyczka aktualizuje się z wydań na GitHubie: https://github.com/DariuszTrachim
 
 = Dane techniczne =
 
-* Ustawienia: opcje `dxsm_settings` (także `fb_app_id`), `dxsm_modules` i `dxsm_editor_settings`.
+* Ustawienia: opcje `dxsm_settings` (także `fb_app_id`), `dxsm_modules`, `dxsm_editor_settings` i `dxsm_redirects`.
 * Pola SEO: `_dxsm_seo_title`, `_dxsm_seo_description` i `_dxsm_seo_keyphrase`.
 * Moduł pełnego SEO zapisuje dane pod nazwami z pierwszego wdrożenia: `dxsm_rs2_seo_settings` i pola `_dxsm_rs2_*`.
 * Funkcje strony (np. własny obraz kart) można podać przez filtr `dxsm_social_image`.
@@ -82,6 +83,12 @@ Nie wysyła treści ani danych osobowych. Raz na kilka godzin sprawdza na GitHub
 Wtyczka korzysta z danych zapisanych w WordPressie. Do sprawdzenia aktualizacji łączy się z github.com bez przesyłania danych strony. Panel czyta publiczną wersję strony z tego samego serwera.
 
 == Changelog ==
+
+= 2.5.0 =
+
+* Przekierowania: w ustawieniach Social Meta można dodać stary adres i nowy adres (301 na stałe albo 302 tymczasowo). Lista przyjmuje też zwykłe przekierowania z Yoast SEO Premium. Reguły tworzące pętlę są odrzucane, a krótkotrwałe ciasteczko `dxsm_redirected` zatrzymuje pętle, których nie widać na liście.
+* Import z Yoast SEO: tytuły SEO, opisy meta i frazy kluczowe przechodzą do pustych pól Social Meta. Zmienne Yoasta, na przykład nazwa witryny, są zamieniane na tekst. Dane Yoasta zostają nietknięte.
+* Kontrola stylu: progi kontrastów, słów-wytrychów i strony biernej rosną z długością tekstu.
 
 = 2.4.0 =
 

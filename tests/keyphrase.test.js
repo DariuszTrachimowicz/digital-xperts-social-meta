@@ -124,4 +124,11 @@ const hard = String.fromCharCode(160);
 const spaced = filler.repeat(6) + 'Wybierz plik, a nie folder. Podaj datę, a nie godzinę. Zapisz numer, a nie nazwę. Warto zauważyć resztę.';
 assert.ok(style(spaced)[1].text.startsWith('Kontrasty „a nie” i „nie tylko, ale”: 3.'));
 assert.deepStrictEqual(style(spaced.replace(/, a nie/g, ', a' + hard + 'nie').replace('Warto zauważyć', 'Warto' + hard + 'zauważyć')), style(spaced));
+// Próg rośnie z długością: 3 słowa-wytrychy to uwaga w krótkim tekście, a w tekście na 4000 słów jeszcze nie.
+const three = 'To kluczowy krok. To istotna zmiana. To dedykowane narzędzie. ';
+assert.strictEqual(style(filler.repeat(6) + three)[2].status, 'uwaga');
+assert.strictEqual(style(filler.repeat(340) + three)[2].status, 'ok');
+assert.strictEqual(style(filler.repeat(340) + three.repeat(3))[2].status, 'uwaga');
+assert.ok(style(filler.repeat(6) + 'Wniosek został dwa razy odrzucony. Projekt został trzy razy poprawiony. Termin został kilka razy zmieniony.')[4].text.startsWith('Strona bierna z „został”: 3.'));
+assert.ok(style(filler.repeat(6) + 'Sklep został otwarty. Rower został umyty. Pomysł został przez wielu uznany za przełom.')[4].text.startsWith('Strona bierna z „został”: 3.'));
 console.log('keyphrase: OK');

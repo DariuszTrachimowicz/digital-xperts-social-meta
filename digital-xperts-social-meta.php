@@ -3,7 +3,7 @@
  * Plugin Name: Digital Xperts Social Meta
  * Plugin URI: https://github.com/DariuszTrachimowicz/digital-xperts-social-meta
  * Description: Tytuły i opisy SEO z podglądem Google, znaczniki Open Graph i karty X oraz opcjonalne pełne SEO dla każdej strony WordPress.
- * Version: 2.4.0
+ * Version: 2.5.0
  * Requires at least: 6.2
  * Requires PHP: 7.4
  * Author: Dariusz Trachimowicz
@@ -21,7 +21,7 @@ namespace DigitalXperts\SocialMeta;
 
 defined('ABSPATH') || exit;
 
-const VERSION = '2.4.0';
+const VERSION = '2.5.0';
 
 // Panel SEO jest kodem proceduralnym i oczekuje tych stałych w globalnej przestrzeni nazw.
 \define('DXSM_VERSION', VERSION);
@@ -31,6 +31,8 @@ require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/legacy.php';
 require_once __DIR__ . '/includes/seo-editor.php';
 require_once __DIR__ . '/includes/updater.php';
+require_once __DIR__ . '/includes/yoast-import.php';
+require_once __DIR__ . '/includes/redirects.php';
 require_once __DIR__ . '/modules/full-seo/migration.php';
 require_once __DIR__ . '/modules/full-seo/seo.php';
 require_once __DIR__ . '/modules/full-seo/schema.php';
@@ -49,6 +51,8 @@ final class Plugin {
         add_action('admin_init', array(__CLASS__, 'register_settings'));
         add_filter('plugin_row_meta', array(__CLASS__, 'row_meta'), 10, 2);
         Updater::hooks();
+        YoastImport::boot();
+        Redirects::boot();
         if (self::full_seo()) {
             FullSeo\SEO::boot();
             FullSeo\Migration::boot();
@@ -398,6 +402,8 @@ final class Plugin {
         }
         submit_button('Zapisz ustawienia');
         echo '</form>';
+        Redirects::panel();
+        YoastImport::panel();
         if ($full) {
             FullSeo\Migration::panel();
         }
