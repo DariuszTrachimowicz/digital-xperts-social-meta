@@ -207,7 +207,7 @@
 
 		const form = previews.querySelector('.dxsm-admin-edit');
 		if (form) {
-			const fields = [...form.querySelectorAll('[data-seo-input]')];
+			const fields = [...form.querySelectorAll('[data-seo-input], [data-seo-keyphrase]')];
 			const warn = (event) => {
 				event.preventDefault();
 				event.returnValue = true;

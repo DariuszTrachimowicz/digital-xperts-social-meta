@@ -3,7 +3,7 @@ Contributors: digitalxperts
 Requires at least: 6.2
 Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 2.0.5
+Stable tag: 2.1.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,7 @@ Digital Xperts Social Meta to jedna wtyczka dla wszystkich stron. Pilnuje, co wy
 * Przyciski „Zapisz i przejdź do następnego”, „Pomiń” i „Wróć do poprzedniego”, żeby szybko przejść przez wszystkie treści.
 * Podgląd wszystkich danych strukturalnych JSON-LD odczytanych z publicznej strony.
 * Sekcję „Podgląd SEO” w edycji wpisu i strony.
+* Pole „Fraza kluczowa”, które sprawdza tytuł, opis, adres i treść, także gdy fraza jest odmieniona.
 
 = Jak działa na stronie =
 
@@ -46,7 +47,7 @@ Wtyczka aktualizuje się z wydań na GitHubie: https://github.com/DariuszTrachim
 = Dane techniczne =
 
 * Ustawienia: opcje `dxsm_settings` (także `fb_app_id`), `dxsm_modules` i `dxsm_editor_settings`.
-* Pola SEO: `_dxsm_seo_title` i `_dxsm_seo_description`.
+* Pola SEO: `_dxsm_seo_title`, `_dxsm_seo_description` i `_dxsm_seo_keyphrase`.
 * Moduł pełnego SEO zapisuje dane pod nazwami z pierwszego wdrożenia: `dxsm_rs2_seo_settings` i pola `_dxsm_rs2_*`.
 * Funkcje strony (np. własny obraz kart) można podać przez filtr `dxsm_social_image`.
 
@@ -78,6 +79,13 @@ Nie wysyła treści ani danych osobowych. Raz na kilka godzin sprawdza na GitHub
 Wtyczka korzysta z danych zapisanych w WordPressie. Do sprawdzenia aktualizacji łączy się z github.com bez przesyłania danych strony. Panel czyta publiczną wersję strony z tego samego serwera.
 
 == Changelog ==
+
+= 2.1.0 =
+
+* Nowe pole „Fraza kluczowa” w sekcji „Podgląd SEO” i w panelu Social Meta. Lista kontroli pokazuje, czy fraza jest w tytule SEO, opisie meta, końcówce adresu, pierwszym akapicie i śródtytule oraz ile razy pada w treści.
+* Fraza jest rozpoznawana w polskiej odmianie: „usługa księgowa” znajdzie też „usług księgowych” i „usłudze księgowej”. W teście na słowach z wpisów blogowych wtyczka połączyła z formą podstawową 98 % odmienionych rzeczowników i 89 % przymiotników.
+* W edytorze blokowym lista odświeża się podczas pisania, bez zapisywania wpisu.
+* Stopniowanie („tani” i „tańszy”) i formy nieregularne („człowiek” i „ludzie”) nie są jeszcze łączone.
 
 = 2.0.5 =
 

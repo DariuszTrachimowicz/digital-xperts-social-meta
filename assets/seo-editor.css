@@ -141,3 +141,23 @@
 	font-size: 15px;
 	font-weight: 600;
 }
+
+.dxsm-seo-keyphrase {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dxsm-seo-keyphrase li {
+	margin: 0;
+	padding: 4px 0 4px 10px;
+	border-left: 4px solid #00a32a;
+}
+
+.dxsm-seo-keyphrase li[data-status="brak"] {
+	border-left-color: #d63638;
+}
+
+.dxsm-seo-keyphrase li[data-status="uwaga"] {
+	border-left-color: #dba617;
+}

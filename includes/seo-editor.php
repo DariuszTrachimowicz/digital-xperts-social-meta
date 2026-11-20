@@ -86,7 +86,8 @@ add_action( 'admin_enqueue_scripts', 'dxsm_enqueue_seo_editor' );
 
 function dxsm_enqueue_seo_preview() {
 	wp_enqueue_style( 'dxsm-seo-editor', plugins_url( 'assets/seo-editor.css', DXSM_PLUGIN_FILE ), array(), DXSM_VERSION );
-	wp_enqueue_script( 'dxsm-seo-editor', plugins_url( 'assets/seo-editor.js', DXSM_PLUGIN_FILE ), array(), DXSM_VERSION, true );
+	wp_enqueue_script( 'dxsm-keyphrase', plugins_url( 'assets/keyphrase.js', DXSM_PLUGIN_FILE ), array(), DXSM_VERSION, true );
+	wp_enqueue_script( 'dxsm-seo-editor', plugins_url( 'assets/seo-editor.js', DXSM_PLUGIN_FILE ), array( 'dxsm-keyphrase' ), DXSM_VERSION, true );
 }
 
 function dxsm_save_seo_metabox( $post_id, $post ) {
@@ -107,7 +108,7 @@ add_action( 'save_post', 'dxsm_save_seo_metabox', 10, 2 );
 
 function dxsm_store_seo_fields( $post_id, $fields ) {
 	$saved = true;
-	foreach ( array( '_dxsm_seo_title', '_dxsm_seo_description' ) as $key ) {
+	foreach ( array( '_dxsm_seo_title', '_dxsm_seo_description', '_dxsm_seo_keyphrase' ) as $key ) {
 		if ( ! isset( $fields[ $key ] ) || ! is_string( $fields[ $key ] ) ) {
 			continue;
 		}
@@ -151,6 +152,10 @@ function dxsm_get_seo_preview_data( $post ) {
 			'automatic_title'       => 'Przykładowy tytuł wpisu',
 			'automatic_description' => 'Tak może wyglądać opis wpisu w wynikach Google i w karcie udostępniania.',
 			'url'                   => home_url( '/' ),
+			'keyphrase'             => '',
+			'slug'                  => '',
+			'content'               => '',
+			'post_title'            => '',
 		);
 	}
 
@@ -167,6 +172,11 @@ function dxsm_get_seo_preview_data( $post ) {
 		// Opis automatyczny jest już zwykłym tekstem (parser zwraca zdekodowany atrybut).
 		'automatic_description' => dxsm_get_automatic_description( $post_id, $is_posts_page ),
 		'url'                   => get_permalink( $post ),
+		'keyphrase'             => dxsm_get_seo_override( $post_id, '_dxsm_seo_keyphrase' ),
+		// Strona główna, szkice i proste odnośniki (?p=123) nie mają nazwy wpisu w adresie: kontrola adresu ich nie dotyczy.
+		'slug'                  => $is_static_front || '' === $post->post_name || false === strpos( (string) get_permalink( $post ), '/' . $post->post_name ) ? null : $post->post_name,
+		'content'               => $post->post_content,
+		'post_title'            => $post->post_title,
 	);
 }
 
@@ -199,6 +209,14 @@ function dxsm_render_seo_fields( $preview ) {
 			placeholder="<?php echo dxsm_escape_seo_text( $preview['automatic_description'] ); ?>"
 			aria-describedby="dxsm-seo-help"><?php echo dxsm_escape_seo_text( $preview['description'] ); ?></textarea>
 		<p id="dxsm-seo-help" class="description">Puste pole używa wartości automatycznej.</p>
+		<?php if ( $preview['post_id'] ) : ?>
+			<label for="dxsm-seo-keyphrase">Fraza kluczowa</label>
+			<input type="text" id="dxsm-seo-keyphrase" name="_dxsm_seo_keyphrase" data-seo-keyphrase
+				value="<?php echo dxsm_escape_seo_text( $preview['keyphrase'] ); ?>" aria-describedby="dxsm-seo-keyphrase-help">
+			<p id="dxsm-seo-keyphrase-help" class="description">Wpisz słowa, pod które piszesz tę treść. Odmiana liczy się sama: „usługa” znajdzie też „usługi” i „usłudze”.</p>
+			<ul class="dxsm-seo-keyphrase" data-seo-keyphrase-checks aria-live="polite"></ul>
+			<textarea hidden data-seo-content data-post-title="<?php echo esc_attr( $preview['post_title'] ); ?>"<?php echo null === $preview['slug'] ? '' : ' data-slug="' . esc_attr( $preview['slug'] ) . '"'; ?>><?php echo esc_textarea( $preview['content'] ); ?></textarea>
+		<?php endif; ?>
 	<?php
 }
 
