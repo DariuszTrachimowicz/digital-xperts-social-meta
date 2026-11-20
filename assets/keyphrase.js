@@ -66,9 +66,19 @@
 		return String(text || '').toLowerCase().match(/[a-ząćęłńóśźż0-9]+/g) || [];
 	}
 
-	// Adresy stron nie mają polskich znaków, więc frazę porównujemy z adresem bez nich.
+	// Adresy stron nie mają polskich znaków, więc tematy słów porównujemy bez nich.
 	function plain(text) {
-		return String(text || '').toLowerCase().replace(/ł/g, 'l').normalize('NFD').replace(/[̀-ͯ]/g, '');
+		return String(text || '').toLowerCase().replace(/ł/g, 'l').normalize('NFD').replace(/\p{M}/gu, '');
+	}
+
+	// Końcówki, które w adresie tracą polski znak i nie są już rozpoznawane przez stem(): agentow, opisac.
+	const PLAIN_ENDINGS = ['owac', 'ywac', 'iwac', 'ow', 'ac', 'ic', 'yc'];
+
+	function sameInAddress(phraseWord, addressWord) {
+		const cut = PLAIN_ENDINGS.find((ending) => addressWord.endsWith(ending) && addressWord.length - ending.length >= 3);
+		const address = new Set([...keys(addressWord), ...(cut ? keys(addressWord.slice(0, -cut.length)) : [])].map(plain));
+		// Słowo frazy pozbawione znaków przed odmianą (sąd, sad) albo po niej (agentów, agent): wystarczy jedno trafienie.
+		return sameWord(plain(phraseWord), addressWord) || [...keys(phraseWord)].some((key) => address.has(plain(key)));
 	}
 
 	// Spójniki i przyimki nie liczą się do frazy: „sklep z butami” to „sklep” i „buty”.
@@ -82,8 +92,8 @@
 
 	// Ile razy wszystkie słowa frazy padają razem w podanych słowach. Kolejność i odstęp nie mają znaczenia:
 	// w treści fraza liczy się, gdy jej słowa stoją w jednym zdaniu.
-	function hits(phrase, tokens) {
-		return Math.min(...phrase.map((word) => tokens.filter((token) => sameWord(word, token)).length));
+	function hits(phrase, tokens, same = sameWord) {
+		return Math.min(...phrase.map((word) => tokens.filter((token) => same(word, token)).length));
 	}
 
 	function analyze(input) {
@@ -94,13 +104,16 @@
 		const has = (text) => hits(phrase, words(text)) > 0;
 		const all = words(input.text);
 		// Zdanie kończy się przed wielką literą albo nowym wierszem, więc „np.” go nie przerywa.
-		const inSentences = (text) => String(text || '').split(/[.!?]+\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ0-9„"])|\n+/)
+		// Skróty, po których zdanie biegnie dalej, tracą kropkę przed podziałem („np. BLIK”). „itd.” i „itp.” zostają, bo zwykle kończą zdanie.
+		const inSentences = (text) => String(text || '').replace(/(^|[^a-ząćęłńóśźż])(np|tzw|tj|tzn|m\.in|ul|al|dr|prof|inż|mgr|wg|nr|godz)\.(?=\s)/gi, '$1$2').split(/[.!?]+\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ0-9„"])|\n+/)
 			.reduce((sum, sentence) => sum + hits(phrase, words(sentence)), 0);
 		const count = inSentences(input.text);
 		const found = 'Fraza pada w treści ' + count + (count === 1 ? ' raz' : ' razy') + ' (słów w treści: ' + all.length + ').';
 		const check = (ok, good, bad) => ({ status: ok ? 'ok' : 'brak', text: ok ? good : bad });
 		const headings = (input.headings || []).filter(Boolean);
-		let density = { status: 'brak', text: 'Fraza nie pada w treści.' };
+		let density = has(input.text)
+			? { status: 'uwaga', text: 'Słowa frazy padają w treści, ale ani razu w jednym zdaniu.' }
+			: { status: 'brak', text: 'Fraza nie pada w treści.' };
 		if (count * 100 > all.length * 3) {
 			// shortcut: jeden próg (3 razy na 100 słów) dla każdej frazy i długości tekstu; osobne progi, gdy pojawią się fałszywe ostrzeżenia.
 			density = { status: 'uwaga', text: found + ' To więcej niż 3 razy na 100 słów, tekst może brzmieć nienaturalnie.' };
@@ -110,8 +123,8 @@
 		return [
 			check(has(input.title), 'Tytuł SEO zawiera frazę.', 'W tytule SEO brakuje frazy.'),
 			check(has(input.description), 'Opis meta zawiera frazę.', 'W opisie meta brakuje frazy.'),
-			input.slug === null ? null : check(hits(phrase.map(plain), words(plain(input.slug))) > 0, 'Końcówka adresu zawiera frazę.', 'W końcówce adresu brakuje frazy.'),
-			check(inSentences(input.firstParagraph) > 0, 'Fraza pada w pierwszym akapicie.', 'W pierwszym akapicie brakuje frazy.'),
+			input.slug === null ? null : check(hits(phrase, words(plain(input.slug)), sameInAddress) > 0, 'Końcówka adresu zawiera frazę.', 'W końcówce adresu brakuje frazy.'),
+			check(has(input.firstParagraph), 'Fraza pada w pierwszym akapicie.', 'W pierwszym akapicie brakuje frazy.'),
 			headings.length
 				? check(headings.some(has), 'Fraza pada w śródtytule.', 'Żaden śródtytuł nie zawiera frazy.')
 				: { status: 'uwaga', text: 'Treść nie ma śródtytułów.' },

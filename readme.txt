@@ -3,7 +3,7 @@ Contributors: digitalxperts
 Requires at least: 6.2
 Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 2.1.0
+Stable tag: 2.1.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,6 +79,15 @@ Nie wysyła treści ani danych osobowych. Raz na kilka godzin sprawdza na GitHub
 Wtyczka korzysta z danych zapisanych w WordPressie. Do sprawdzenia aktualizacji łączy się z github.com bez przesyłania danych strony. Panel czyta publiczną wersję strony z tego samego serwera.
 
 == Changelog ==
+
+= 2.1.1 =
+
+Poprawki po sprawdzeniu frazy kluczowej na 53 wpisach.
+
+* Pierwszy akapit: fraza liczy się także wtedy, gdy jej słowa stoją w dwóch sąsiednich zdaniach.
+* Treść: gdy słowa frazy padają, ale nigdy w jednym zdaniu, lista mówi o tym wprost i nie pokazuje już „Fraza nie pada w treści”.
+* Adres: wtyczka rozpoznaje odmianę także w adresie bez polskich znaków, na przykład „agentów” i „agenci” albo „opis” i „opisac”.
+* Słowa z sąsiednich elementów (pytanie i odpowiedź w FAQ, elementy listy) nie sklejają się już w jedno.
 
 = 2.1.0 =
 

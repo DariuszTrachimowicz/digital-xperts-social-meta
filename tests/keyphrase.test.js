@@ -43,6 +43,22 @@ assert.strictEqual(analyze({ ...input, phrase: 'marketing AI', title: 'Marketing
 assert.strictEqual(analyze({ ...input, phrase: 'sklep z butami', title: 'Buty w naszym sklepie' })[0].status, 'ok');
 assert.strictEqual(analyze({ ...input, slug: null }).length, 5);
 const split = { ...input, firstParagraph: 'Oferujemy usługi. Księgowe pracują tutaj.', text: 'Usługi świadczy np. biuro księgowe.' };
-assert.strictEqual(analyze(split)[3].status, 'brak');
+assert.strictEqual(analyze(split)[3].status, 'ok');
 assert.strictEqual(analyze(split)[5].status, 'uwaga');
+assert.deepStrictEqual(analyze({ ...split, text: 'Oferujemy usługi. Księgowe pracują tutaj.' })[5], { status: 'uwaga', text: 'Słowa frazy padają w treści, ale ani razu w jednym zdaniu.' });
+// Adres bez polskich znaków: agentów i agenci, opis i opisać, usługi i usługę.
+assert.strictEqual(analyze({ ...input, phrase: 'strona dla agentów AI', slug: 'strona-internetowa-agenci-ai-audyt' })[2].status, 'ok');
+assert.strictEqual(analyze({ ...input, phrase: 'opis usługi', slug: 'jak-opisac-usluge-zeby-klient-rozumial' })[2].status, 'ok');
+assert.strictEqual(analyze({ ...input, phrase: 'źródła wiedzy', slug: 'zrodlo-wiedzy' })[2].status, 'ok');
+assert.strictEqual(analyze({ ...input, phrase: 'praca zdalna', slug: 'prawo-pracy' })[2].status, 'brak');
+assert.strictEqual(analyze({ ...input, phrase: 'sąd pracy', slug: 'sad-pracy' })[2].status, 'ok');
+assert.strictEqual(analyze({ ...input, phrase: 'zarządzanie projektami', slug: 'zarzadzanie-projektami' })[2].status, 'ok');
+// Każde słowo z zestawu musi pasować do własnego adresu bez polskich znaków.
+const bare = (word) => word.replace(/ł/g, 'l').normalize('NFD').replace(/\p{M}/gu, '');
+const lost = require('./odmiana.json').filter(([form]) => analyze({ ...input, phrase: form, slug: bare(form) })[2].status !== 'ok');
+assert.deepStrictEqual(lost, []);
+assert.strictEqual(analyze({ ...input, phrase: 'serwis Citroen', slug: 'serwis-citroën' })[2].status, 'ok');
+assert.strictEqual(analyze({ ...input, phrase: 'płatności BLIK', text: 'Akceptujemy płatności mobilne, np. BLIK. Inne też.' })[5].status, 'uwaga');
+assert.ok(analyze({ ...input, phrase: 'płatności BLIK', text: 'Akceptujemy płatności mobilne, np. BLIK. Inne też.' })[5].text.startsWith('Fraza pada w treści 1 raz'));
+assert.strictEqual(analyze({ ...input, phrase: 'serwis laptopa', text: 'Naprawiamy laptopy, monitory itp. Serwis jest czynny w soboty.' })[5].text, 'Słowa frazy padają w treści, ale ani razu w jednym zdaniu.');
 console.log('keyphrase: OK');

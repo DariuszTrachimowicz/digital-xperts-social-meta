@@ -22,7 +22,8 @@ function renderKeyphrase(editor) {
 		live = null;
 	}
 	const html = live ? live.getEditedPostContent() : saved.value;
-	const page = new DOMParser().parseFromString(html.replace(/<br\s*\/?>/gi, ' ').replace(/<\/(p|h[1-6]|li|div|td|blockquote|figcaption)>/gi, '$&\n\n'), 'text/html');
+	// Spacja między sąsiednimi znacznikami: pytanie i odpowiedź w FAQ albo dwa elementy listy nie sklejają się w jedno słowo.
+	const page = new DOMParser().parseFromString(html.replace(/<br\s*\/?>/gi, ' ').replace(/></g, '> <').replace(/<\/(p|h[1-6]|li|div|td|blockquote|figcaption)>/gi, '$&\n\n'), 'text/html');
 	page.querySelectorAll('script, style').forEach((node) => node.remove());
 	const text = (node) => node.textContent.trim();
 	const body = page.body.textContent;
