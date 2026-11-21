@@ -3,7 +3,7 @@ Contributors: digitalxperts
 Requires at least: 6.2
 Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 2.5.0
+Stable tag: 2.6.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,6 +15,7 @@ Digital Xperts Social Meta to jedna wtyczka dla wszystkich stron. Pilnuje, co wy
 
 = Co zyskujesz =
 
+* Kokpit z ocenami SEO i czytelności wszystkich treści oraz listą braków do uzupełnienia.
 * Panel „Social Meta” z listą wpisów i stron, wyszukiwarką, filtrami i licznikiem „Do uzupełnienia SEO”.
 * Podgląd wyniku Google na telefonie i komputerze oraz kart Facebooka, LinkedIna i X, który zmienia się podczas pisania.
 * Przyciski „Zapisz i przejdź do następnego”, „Pomiń” i „Wróć do poprzedniego”, żeby szybko przejść przez wszystkie treści.
@@ -51,7 +52,7 @@ Wtyczka aktualizuje się z wydań na GitHubie: https://github.com/DariuszTrachim
 = Dane techniczne =
 
 * Ustawienia: opcje `dxsm_settings` (także `fb_app_id`), `dxsm_modules`, `dxsm_editor_settings` i `dxsm_redirects`.
-* Pola SEO: `_dxsm_seo_title`, `_dxsm_seo_description` i `_dxsm_seo_keyphrase`.
+* Pola SEO: `_dxsm_seo_title`, `_dxsm_seo_description` i `_dxsm_seo_keyphrase`. Oceny: `_dxsm_score_seo` i `_dxsm_score_readability`.
 * Moduł pełnego SEO zapisuje dane pod nazwami z pierwszego wdrożenia: `dxsm_rs2_seo_settings` i pola `_dxsm_rs2_*`.
 * Funkcje strony (np. własny obraz kart) można podać przez filtr `dxsm_social_image`.
 
@@ -83,6 +84,13 @@ Nie wysyła treści ani danych osobowych. Raz na kilka godzin sprawdza na GitHub
 Wtyczka korzysta z danych zapisanych w WordPressie. Do sprawdzenia aktualizacji łączy się z github.com bez przesyłania danych strony. Panel czyta publiczną wersję strony z tego samego serwera.
 
 == Changelog ==
+
+= 2.6.0 =
+
+* Kokpit: nowy ekran startowy panelu z ocenami SEO i czytelności wszystkich treści, listą braków (fraza, opis, tytuł) i przyciskiem przeliczenia ocen. Każda liczba prowadzi do listy treści z tym stanem.
+* Edycja treści: podsumowanie ocen na górze, liczniki długości tytułu SEO i opisu meta, analiza w zwijanych sekcjach. Problemy i uwagi są na wierzchu, dobre wyniki zwinięte pod spodem.
+* Lista treści w panelu pokazuje oceny przy każdej pozycji i ma filtr po ocenie oraz po braku frazy kluczowej. Przyciski zapisu zostają widoczne na dole okna.
+* Listy wpisów i stron w WordPressie mają kolumnę „SEO i czytelność”.
 
 = 2.5.0 =
 

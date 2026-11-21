@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/admin-settings.php';
+require_once __DIR__ . '/dashboard.php';
 
 // Wpisy i strony, a przy włączonym pełnym SEO także typy treści z jego mapy witryny (np. usługi, produkty).
 function dxsm_seo_post_types() {
@@ -121,6 +122,12 @@ function dxsm_store_seo_fields( $post_id, $fields ) {
 		}
 		$saved = $value === get_post_meta( $post_id, $key, true ) && $saved;
 	}
+	// Oceny wylicza analiza w przeglądarce i wysyła razem z polami. Nieznana wartość kasuje ocenę.
+	foreach ( DXSM_SCORE_KEYS as $kind => $key ) {
+		if ( isset( $fields[ $key ] ) && is_string( $fields[ $key ] ) ) {
+			dxsm_store_score( $post_id, $kind, sanitize_key( wp_unslash( $fields[ $key ] ) ) );
+		}
+	}
 	return $saved;
 }
 
@@ -174,7 +181,8 @@ function dxsm_link_candidates( $post_id ) {
 	return $candidates;
 }
 
-function dxsm_get_seo_preview_data( $post ) {
+// $with_links = false pomija listę kandydatów do linków, gdy potrzebne są tylko dane do ocen (przeliczanie w kokpicie).
+function dxsm_get_seo_preview_data( $post, $with_links = true ) {
 	if ( ! $post ) {
 		return array(
 			'post_id'               => 0,
@@ -209,7 +217,7 @@ function dxsm_get_seo_preview_data( $post ) {
 		'slug'                  => $is_static_front || '' === $post->post_name || false === strpos( (string) get_permalink( $post ), '/' . $post->post_name ) ? null : $post->post_name,
 		'content'               => $post->post_content,
 		'post_title'            => $post->post_title,
-		'link_candidates'       => dxsm_link_candidates( $post_id ),
+		'link_candidates'       => $with_links ? dxsm_link_candidates( $post_id ) : array(),
 	);
 }
 
@@ -228,33 +236,66 @@ function dxsm_render_seo_metabox( $post ) {
 	<?php
 }
 
+function dxsm_render_seo_section( $name, $title, $list_attribute ) {
+	?>
+		<details class="dxsm-seo-section" data-seo-section="<?php echo esc_attr( $name ); ?>">
+			<summary><span class="dxsm-seo-section-title"><?php echo esc_html( $title ); ?></span> <span class="dxsm-seo-section-count" data-seo-count></span></summary>
+			<p class="description" data-seo-empty hidden></p>
+			<?php if ( 'links' === $name ) : ?>
+				<ul class="dxsm-seo-links" data-seo-links hidden></ul>
+			<?php else : ?>
+				<ul class="dxsm-seo-keyphrase" data-seo-issues <?php echo esc_attr( $list_attribute ); ?> hidden></ul>
+				<details class="dxsm-seo-good" data-seo-good hidden>
+					<summary>Dobre wyniki</summary>
+					<ul class="dxsm-seo-keyphrase"></ul>
+				</details>
+			<?php endif; ?>
+		</details>
+	<?php
+}
+
+function dxsm_render_seo_meter( $name ) {
+	?>
+		<p class="dxsm-seo-meter" data-seo-meter="<?php echo esc_attr( $name ); ?>" id="dxsm-seo-meter-<?php echo esc_attr( $name ); ?>">
+			<span class="dxsm-seo-meter-track" aria-hidden="true"><span data-seo-meter-bar></span></span>
+			<span data-seo-meter-text></span>
+		</p>
+	<?php
+}
+
 function dxsm_render_seo_fields( $preview ) {
 	?>
+		<?php if ( $preview['post_id'] ) : ?>
+			<p class="dxsm-seo-summary" aria-live="polite">
+				<span class="dxsm-seo-pill" data-seo-pill="seo" data-rating="none">SEO: bez oceny</span>
+				<span class="dxsm-seo-pill" data-seo-pill="readability" data-rating="none">Czytelność: bez oceny</span>
+			</p>
+		<?php endif; ?>
 		<label for="dxsm-seo-title">Tytuł SEO</label>
 		<input type="text" id="dxsm-seo-title" name="_dxsm_seo_title" data-seo-input="title"
 			value="<?php echo dxsm_escape_seo_text( $preview['title'] ); ?>"
 			data-automatic="<?php echo dxsm_escape_seo_text( $preview['automatic_title'] ); ?>"
 			placeholder="<?php echo dxsm_escape_seo_text( $preview['automatic_title'] ); ?>"
-			aria-describedby="dxsm-seo-help">
+			aria-describedby="dxsm-seo-meter-title dxsm-seo-help">
+		<?php dxsm_render_seo_meter( 'title' ); ?>
 		<label for="dxsm-seo-description">Opis meta</label>
 		<textarea id="dxsm-seo-description" name="_dxsm_seo_description" data-seo-input="description"
 			rows="3" data-automatic="<?php echo dxsm_escape_seo_text( $preview['automatic_description'] ); ?>"
 			placeholder="<?php echo dxsm_escape_seo_text( $preview['automatic_description'] ); ?>"
-			aria-describedby="dxsm-seo-help"><?php echo dxsm_escape_seo_text( $preview['description'] ); ?></textarea>
-		<p id="dxsm-seo-help" class="description">Puste pole używa wartości automatycznej.</p>
+			aria-describedby="dxsm-seo-meter-description dxsm-seo-help"><?php echo dxsm_escape_seo_text( $preview['description'] ); ?></textarea>
+		<?php dxsm_render_seo_meter( 'description' ); ?>
+		<p id="dxsm-seo-help" class="description">Puste pole używa wartości automatycznej. Licznik pokazuje wtedy jej długość.</p>
 		<?php if ( $preview['post_id'] ) : ?>
 			<label for="dxsm-seo-keyphrase">Fraza kluczowa</label>
 			<input type="text" id="dxsm-seo-keyphrase" name="_dxsm_seo_keyphrase" data-seo-keyphrase
 				value="<?php echo dxsm_escape_seo_text( $preview['keyphrase'] ); ?>" aria-describedby="dxsm-seo-keyphrase-help">
 			<p id="dxsm-seo-keyphrase-help" class="description">Wpisz słowa, pod które piszesz tę treść. Odmiana liczy się sama: „usługa” znajdzie też „usługi” i „usłudze”.</p>
-			<ul class="dxsm-seo-keyphrase" data-seo-keyphrase-checks aria-live="polite"></ul>
 			<textarea hidden data-seo-content data-url="<?php echo esc_url( $preview['url'] ); ?>" data-post-title="<?php echo esc_attr( $preview['post_title'] ); ?>"<?php echo null === $preview['slug'] ? '' : ' data-slug="' . esc_attr( $preview['slug'] ) . '"'; ?>><?php echo esc_textarea( $preview['content'] ); ?></textarea>
-			<p id="dxsm-seo-readability-title"><strong>Czytelność</strong></p>
-			<ul class="dxsm-seo-keyphrase" data-seo-readability aria-labelledby="dxsm-seo-readability-title" aria-live="polite"></ul>
-			<p id="dxsm-seo-style-title"><strong>Styl i prosty język</strong></p>
-			<ul class="dxsm-seo-keyphrase" data-seo-style aria-labelledby="dxsm-seo-style-title" aria-live="polite"></ul>
-			<p id="dxsm-seo-links-title"><strong>Podpowiedzi linków wewnętrznych</strong></p>
-			<ul class="dxsm-seo-links" data-seo-links aria-labelledby="dxsm-seo-links-title" aria-live="polite"></ul>
+			<input type="hidden" name="_dxsm_score_seo" data-seo-score="seo" value="<?php echo esc_attr( dxsm_score( $preview['post_id'], 'seo' ) ); ?>">
+			<input type="hidden" name="_dxsm_score_readability" data-seo-score="readability" value="<?php echo esc_attr( dxsm_score( $preview['post_id'], 'readability' ) ); ?>">
+			<?php dxsm_render_seo_section( 'seo', 'Analiza SEO', 'data-seo-keyphrase-checks' ); ?>
+			<?php dxsm_render_seo_section( 'reading', 'Czytelność i styl', 'data-seo-readability' ); ?>
+			<?php dxsm_render_seo_section( 'links', 'Podpowiedzi linków wewnętrznych', '' ); ?>
 			<script type="application/json" data-seo-link-candidates><?php echo wp_json_encode( $preview['link_candidates'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE ); ?></script>
 		<?php endif; ?>
 	<?php

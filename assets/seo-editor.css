@@ -180,3 +180,155 @@
 .dxsm-seo-links a {
 	font-weight: 600;
 }
+
+/* Oceny i analiza: kolory stanów WordPressa, kształt znacznika różni się razem z kolorem. */
+.dxsm-seo-editor {
+	--dxsm-good: #00a32a;
+	--dxsm-ok: #996800;
+	--dxsm-ok-fill: #dba617;
+	--dxsm-bad: #d63638;
+	--dxsm-none: #8c8f94;
+}
+
+.dxsm-seo-summary {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.dxsm-seo-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 28px;
+	padding: 2px 12px 2px 10px;
+	border: 1px solid #c3c4c7;
+	border-radius: 14px;
+	background: #fff;
+	font-weight: 600;
+}
+
+.dxsm-seo-pill::before {
+	content: "";
+	width: 12px;
+	height: 12px;
+	box-sizing: border-box;
+	border: 2px solid var(--dxsm-none);
+	border-radius: 50%;
+}
+
+.dxsm-seo-pill[data-rating="good"]::before {
+	border-color: var(--dxsm-good);
+	background: var(--dxsm-good);
+}
+
+.dxsm-seo-pill[data-rating="ok"]::before {
+	border-color: var(--dxsm-ok);
+	background: linear-gradient(90deg, var(--dxsm-ok-fill) 50%, transparent 50%);
+}
+
+.dxsm-seo-pill[data-rating="bad"]::before {
+	border-color: var(--dxsm-bad);
+	border-width: 3px;
+}
+
+.dxsm-seo-pill[data-rating="none"]::before {
+	border-style: dashed;
+}
+
+.dxsm-seo-meter {
+	display: grid;
+	grid-template-columns: minmax(80px, 200px) 1fr;
+	align-items: center;
+	gap: 12px;
+	margin-top: -4px;
+	color: #50575e;
+	font-size: 12px;
+}
+
+.dxsm-seo-meter-track {
+	height: 6px;
+	overflow: hidden;
+	border-radius: 3px;
+	background: #dcdcde;
+}
+
+.dxsm-seo-meter-track > span {
+	display: block;
+	height: 100%;
+	border-radius: 3px;
+	background: var(--dxsm-good);
+}
+
+.dxsm-seo-meter[data-status="krotki"] .dxsm-seo-meter-track > span {
+	background: var(--dxsm-none);
+}
+
+.dxsm-seo-meter[data-status="uwaga"] .dxsm-seo-meter-track > span {
+	background: var(--dxsm-ok-fill);
+}
+
+.dxsm-seo-meter[data-status="uwaga"] [data-seo-meter-text] {
+	color: var(--dxsm-ok);
+	font-weight: 600;
+}
+
+.dxsm-seo-section {
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.dxsm-seo-section > summary {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 4px 12px;
+	min-height: 40px;
+	padding: 4px 12px;
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.dxsm-seo-section > summary:focus-visible,
+.dxsm-seo-good > summary:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+
+.dxsm-seo-section-count {
+	margin-left: auto;
+	color: #50575e;
+	font-weight: 400;
+}
+
+.dxsm-seo-section[open] > summary {
+	border-bottom: 1px solid #dcdcde;
+}
+
+.dxsm-seo-section > :not(summary) {
+	margin: 12px;
+}
+
+.dxsm-seo-keyphrase li {
+	margin-bottom: 4px;
+	background: #f6f7f7;
+}
+
+.dxsm-seo-keyphrase li[data-status="brak"] {
+	background: #fcf0f1;
+}
+
+.dxsm-seo-keyphrase li[data-status="uwaga"] {
+	background: #fcf9e8;
+}
+
+.dxsm-seo-good > summary {
+	padding: 4px 0;
+	cursor: pointer;
+	color: #50575e;
+}
+
+.dxsm-seo-good > ul {
+	margin-top: 8px;
+}

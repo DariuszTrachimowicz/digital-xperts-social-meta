@@ -77,13 +77,15 @@ function dxsm_admin_type_choices() {
 function dxsm_admin_picker_filters() {
 	$type = dxsm_schema_preview_get_field( 'dxsm_schema_type' );
 	$seo = dxsm_schema_preview_get_field( 'dxsm_seo_filter' );
+	$score = (string) dxsm_schema_preview_get_field( 'dxsm_score' );
 	$year = dxsm_admin_positive_int( 'dxsm_year' );
 	$month = dxsm_admin_positive_int( 'dxsm_month' );
 	return array(
 		'search' => dxsm_schema_preview_get_field( 'dxsm_schema_search' ) ?? '',
 		'type'   => in_array( $type, dxsm_seo_post_types(), true ) ? $type : 'all',
 		'sort'   => 'title' === dxsm_schema_preview_get_field( 'dxsm_sort' ) ? 'title' : 'recent',
-		'seo'    => in_array( $seo, array( 'any', 'title', 'description', 'both' ), true ) ? $seo : '',
+		'seo'    => in_array( $seo, array( 'any', 'title', 'description', 'both', 'keyphrase' ), true ) ? $seo : '',
+		'score'  => preg_match( '/^(seo|readability)-(good|ok|bad|none)$/D', $score ) ? $score : '',
 		'year'   => $year >= 1000 && $year <= 9999 ? $year : 0,
 		'month'  => $month <= 12 ? $month : 0,
 		'page'   => max( 1, min( intdiv( PHP_INT_MAX, DXSM_PICKER_PAGE_SIZE ), dxsm_admin_positive_int( 'dxsm_results_page' ) ) ),
@@ -101,7 +103,7 @@ function dxsm_admin_context( $view, $filters ) {
 	if ( 'title' === $filters['sort'] ) {
 		$context['dxsm_sort'] = 'title';
 	}
-	foreach ( array( 'seo' => 'dxsm_seo_filter', 'year' => 'dxsm_year', 'month' => 'dxsm_month' ) as $key => $param ) {
+	foreach ( array( 'seo' => 'dxsm_seo_filter', 'score' => 'dxsm_score', 'year' => 'dxsm_year', 'month' => 'dxsm_month' ) as $key => $param ) {
 		if ( $filters[ $key ] ) {
 			$context[ $param ] = $filters[ $key ];
 		}
@@ -192,6 +194,8 @@ function dxsm_render_social_meta_page() {
 	$views = array( 'google' => 'Google', 'social' => 'Media społecznościowe', 'schema' => 'Dane strukturalne' );
 	$view = dxsm_schema_preview_get_field( 'dxsm_view' );
 	$settings_view = 'settings' === $view;
+	// Kokpit jest ekranem startowym. Lista treści otwiera się z własnego odnośnika (dxsm_open), z wybraną treścią albo z filtrem.
+	$dashboard_view = ! $settings_view && ! isset( $views[ $view ] ) && ! isset( $_GET['dxsm_schema_post'] ) && ! isset( $_GET['dxsm_open'] ) && ! isset( $_GET['dxsm_resume'] );
 	if ( ! $settings_view && ! isset( $views[ $view ] ) ) {
 		$view = isset( $_GET['dxsm_schema_post'] ) ? 'schema' : 'google';
 	}
@@ -201,13 +205,16 @@ function dxsm_render_social_meta_page() {
 		<header class="dxsm-admin-header">
 			<h1>Social Meta</h1>
 			<nav class="dxsm-admin-nav" aria-label="Social Meta">
-				<a href="<?php echo esc_url( dxsm_admin_url() ); ?>"<?php echo $settings_view ? '' : ' aria-current="page"'; ?>>Podgląd treści</a>
+				<a href="<?php echo esc_url( dxsm_admin_url() ); ?>"<?php echo $dashboard_view ? ' aria-current="page"' : ''; ?>>Kokpit</a>
+				<a href="<?php echo esc_url( dxsm_admin_url( array( 'dxsm_open' => 1 ) ) ); ?>"<?php echo $settings_view || $dashboard_view ? '' : ' aria-current="page"'; ?>>Treści</a>
 				<a href="<?php echo esc_url( dxsm_admin_url( array( 'dxsm_view' => 'settings' ) ) ); ?>"<?php echo $settings_view ? ' aria-current="page"' : ''; ?>>Ustawienia</a>
 			</nav>
 		</header>
 		<?php
 		if ( $settings_view ) {
 			dxsm_render_admin_settings( $settings );
+		} elseif ( $dashboard_view ) {
+			dxsm_render_admin_dashboard();
 		} else {
 			dxsm_render_admin_workspace( $view, $views, $settings );
 		}
@@ -263,10 +270,12 @@ function dxsm_query_admin_picker( &$filters, $ids_only = false ) {
 		'year'                => $filters['year'],
 		'monthnum'            => $filters['month'],
 	);
+	$meta_filters = array();
 	if ( $filters['seo'] ) {
 		$meta_query = array( 'relation' => 'any' === $filters['seo'] ? 'OR' : 'AND' );
-		foreach ( array( 'title' => '_dxsm_seo_title', 'description' => '_dxsm_seo_description' ) as $field => $key ) {
-			if ( in_array( $filters['seo'], array( $field, 'any', 'both' ), true ) ) {
+		foreach ( array( 'title' => '_dxsm_seo_title', 'description' => '_dxsm_seo_description', 'keyphrase' => '_dxsm_seo_keyphrase' ) as $field => $key ) {
+			// Fraza kluczowa ma własny filtr i nie wchodzi do „brakuje tytułu lub opisu”.
+			if ( $filters['seo'] === $field || ( 'keyphrase' !== $field && in_array( $filters['seo'], array( 'any', 'both' ), true ) ) ) {
 				$meta_query[] = array(
 					'relation' => 'OR',
 					array( 'key' => $key, 'compare' => 'NOT EXISTS' ),
@@ -274,7 +283,20 @@ function dxsm_query_admin_picker( &$filters, $ids_only = false ) {
 				);
 			}
 		}
-		$query_args['meta_query'] = $meta_query;
+		$meta_filters[] = $meta_query;
+	}
+	if ( $filters['score'] ) {
+		list( $kind, $rating ) = explode( '-', $filters['score'] );
+		$meta_filters[] = 'none' === $rating
+			? array(
+				'relation' => 'OR',
+				array( 'key' => DXSM_SCORE_KEYS[ $kind ], 'compare' => 'NOT EXISTS' ),
+				array( 'key' => DXSM_SCORE_KEYS[ $kind ], 'value' => array( 'good', 'ok', 'bad' ), 'compare' => 'NOT IN' ),
+			)
+			: array( array( 'key' => DXSM_SCORE_KEYS[ $kind ], 'value' => $rating ) );
+	}
+	if ( $meta_filters ) {
+		$query_args['meta_query'] = array_merge( array( 'relation' => 'AND' ), $meta_filters );
 	}
 	$id = ctype_digit( $search ) ? (int) $search : 0;
 	if ( preg_match( '~^https?://~i', $search ) ) {
@@ -407,8 +429,19 @@ function dxsm_render_admin_extra_filters( $filters ) {
 	<div>
 		<label for="dxsm-seo-filter">Własne pola SEO</label>
 		<select id="dxsm-seo-filter" name="dxsm_seo_filter">
-			<?php foreach ( array( '' => 'Dowolny stan SEO', 'any' => 'Brakuje tytułu lub opisu', 'title' => 'Brakuje tytułu SEO', 'description' => 'Brakuje opisu meta', 'both' => 'Brakuje obu pól' ) as $value => $label ) : ?>
+			<?php foreach ( array( '' => 'Dowolny stan SEO', 'any' => 'Brakuje tytułu lub opisu', 'title' => 'Brakuje tytułu SEO', 'description' => 'Brakuje opisu meta', 'both' => 'Brakuje obu pól', 'keyphrase' => 'Brakuje frazy kluczowej' ) as $value => $label ) : ?>
 				<option value="<?php echo esc_attr( $value ); ?>"<?php selected( $filters['seo'], $value ); ?>><?php echo esc_html( $label ); ?></option>
+			<?php endforeach; ?>
+		</select>
+	</div>
+	<div>
+		<label for="dxsm-score">Ocena</label>
+		<select id="dxsm-score" name="dxsm_score">
+			<option value="">Dowolna ocena</option>
+			<?php foreach ( array( 'seo' => 'SEO', 'readability' => 'Czytelność' ) as $kind => $kind_label ) : ?>
+				<?php foreach ( DXSM_RATINGS as $rating => $label ) : ?>
+					<option value="<?php echo esc_attr( $kind . '-' . $rating ); ?>"<?php selected( $filters['score'], $kind . '-' . $rating ); ?>><?php echo esc_html( $kind_label . ': ' . $label ); ?></option>
+				<?php endforeach; ?>
 			<?php endforeach; ?>
 		</select>
 	</div>
@@ -457,6 +490,7 @@ function dxsm_render_admin_picker_results( $query, $filters, $context, $selected
 			?>
 			<li><a href="<?php echo esc_url( dxsm_admin_url( $context + array( 'dxsm_schema_post' => $result->ID ), '#dxsm-admin-preview' ) ); ?>"<?php echo $selected_id === (int) $result->ID ? ' aria-current="true"' : ''; ?>>
 				<strong><?php echo esc_html( dxsm_admin_post_title( $result ) ); ?></strong>
+				<span class="dxsm-admin-scores"><?php echo dxsm_score_dot( dxsm_score( $result->ID, 'seo' ), 'SEO' ) . ' SEO ' . dxsm_score_dot( dxsm_score( $result->ID, 'readability' ), 'Czytelność' ) . ' czytelność'; ?></span>
 				<span><?php echo esc_html( 'page' === $result->post_type ? 'Strona' : ( 'post' === $result->post_type ? 'Wpis' : dxsm_post_type_label( $result->post_type ) ) ); ?> · <?php echo esc_html( get_the_date( 'd.m.Y', $result ) ); ?></span>
 				<?php if ( $missing_title || $missing_description ) : ?>
 					<span class="dxsm-admin-missing"><?php echo $missing_title && $missing_description ? 'Brak własnego tytułu i opisu' : ( $missing_title ? 'Brak własnego tytułu' : 'Brak własnego opisu' ); ?></span>
@@ -518,7 +552,7 @@ function dxsm_render_admin_seo_editor( $post, $view, $context, $google_mode ) {
 	<div class="dxsm-seo-editor" data-dxsm-seo data-dxsm-live-previews>
 		<?php if ( current_user_can( 'edit_post', $post->ID ) ) : ?>
 			<?php if ( 'yes' === $saved ) : ?>
-				<div class="notice notice-success inline" role="status"><p>Zapisano tytuł SEO i opis meta.</p></div>
+				<div class="notice notice-success inline" role="status"><p>Zapisano pola SEO i oceny.</p></div>
 			<?php elseif ( 'next' === $saved ) : ?>
 				<div class="notice notice-success inline" role="status"><p>Zapisano poprzednią pozycję. Otworzono kolejną.</p></div>
 			<?php elseif ( 'end' === $saved ) : ?>
@@ -540,7 +574,7 @@ function dxsm_render_admin_seo_editor( $post, $view, $context, $google_mode ) {
 				<input type="hidden" name="dxsm_return_view" value="<?php echo esc_attr( $view ); ?>">
 				<?php wp_nonce_field( 'dxsm_panel_save_' . $post->ID, '_dxsm_panel_nonce', false ); ?>
 				<?php dxsm_render_seo_fields( $preview ); ?>
-				<div class="dxsm-admin-actions">
+				<div class="dxsm-admin-actions dxsm-admin-savebar">
 					<button type="submit" class="button button-primary">Zapisz SEO</button>
 					<button type="submit" class="button" name="dxsm_save_mode" value="next">Zapisz i przejdź do następnego</button>
 					<button type="submit" class="button" name="dxsm_save_mode" value="skip">Pomiń i przejdź do następnego</button>

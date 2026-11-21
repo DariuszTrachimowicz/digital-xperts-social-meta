@@ -238,7 +238,16 @@
 		];
 	}
 
-	const api = { stem, sameWord, analyze, linkSuggestions, readability, syllables, style };
+	// Ocena z listy kontroli: problem liczy się za dwa punkty, uwaga za jeden. Pusta lista to brak oceny.
+	function rate(checks) {
+		if (!checks.length) {
+			return 'none';
+		}
+		const points = checks.reduce((sum, check) => sum + (check.status === 'brak' ? 2 : check.status === 'uwaga' ? 1 : 0), 0);
+		return points <= 1 ? 'good' : points <= 4 ? 'ok' : 'bad';
+	}
+
+	const api = { stem, sameWord, analyze, linkSuggestions, readability, syllables, style, rate };
 	if (typeof module !== 'undefined' && module.exports) {
 		module.exports = api;
 	} else {

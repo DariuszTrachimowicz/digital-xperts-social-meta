@@ -6,7 +6,7 @@ Kanoniczne źródło wspólnej wtyczki Social Meta od 18 listopada 2026. Publicz
 
 - Claude koduje, testuje i wdraża. Codex jest tylko sędzią (`codex exec -s read-only ... < /dev/null`).
 - Kod musi działać na każdej domenie: żadnych treści, numerów grafik ani nazw typów treści jednej strony w rdzeniu. Funkcje jednej strony idą do jej dodatku (np. `d-x.pl/wordpress/digital-xperts-dx-pl`) albo przez filtr.
-- Nazwy danych w bazie są stałe: `_dxsm_seo_title`, `_dxsm_seo_description`, `_dxsm_seo_keyphrase`, `dxsm_settings`, `dxsm_modules`, `dxsm_editor_settings`, `dxsm_redirects`; moduł pełnego SEO: `dxsm_rs2_seo_settings`, `_dxsm_rs2_*`, `dxsm_rs2_sp_*`.
+- Nazwy danych w bazie są stałe: `_dxsm_seo_title`, `_dxsm_seo_description`, `_dxsm_seo_keyphrase`, `_dxsm_score_seo`, `_dxsm_score_readability`, `dxsm_settings`, `dxsm_modules`, `dxsm_editor_settings`, `dxsm_redirects`; moduł pełnego SEO: `dxsm_rs2_seo_settings`, `_dxsm_rs2_*`, `dxsm_rs2_sp_*`.
 - Polskie teksty widoczne dla ludzi bez pauz i półpauz, procent ze spacją („30 %”).
 - Wersja w nagłówku, w `const VERSION` i w `Stable tag` readme musi być ta sama. Changelog w readme.txt.
 

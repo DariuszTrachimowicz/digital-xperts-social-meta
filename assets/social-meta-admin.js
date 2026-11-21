@@ -10,7 +10,7 @@
 	}
 
 	const picker = admin.querySelector('.dxsm-admin-search');
-	const filterKeys = ['dxsm_schema_search', 'dxsm_schema_type', 'dxsm_sort', 'dxsm_seo_filter', 'dxsm_year', 'dxsm_month', 'dxsm_results_page'];
+	const filterKeys = ['dxsm_schema_search', 'dxsm_schema_type', 'dxsm_sort', 'dxsm_seo_filter', 'dxsm_score', 'dxsm_year', 'dxsm_month', 'dxsm_results_page'];
 	const filterParams = new URLSearchParams(window.location.search);
 	const resumeKey = picker?.dataset.resumeKey;
 	const rememberWorkspace = () => {
@@ -34,7 +34,8 @@
 		const url = new URL(window.location.href);
 		const resumed = url.searchParams.get('dxsm_resume') === '1';
 		const stateKeys = [...filterKeys, 'dxsm_schema_post', 'dxsm_view'];
-		if (!url.hash && [...url.searchParams.keys()].every((key) => key === 'page')) {
+		// Ostatni stan listy wraca tylko po wejściu z zakładki „Treści” (dxsm_open). Sam adres panelu otwiera kokpit.
+		if (!url.hash && url.searchParams.has('dxsm_open') && [...url.searchParams.keys()].every((key) => key === 'page' || key === 'dxsm_open')) {
 			let stored;
 			try {
 				stored = new URLSearchParams(window.localStorage.getItem(resumeKey) || '');
@@ -166,7 +167,7 @@
 			search.value = '';
 			picker.elements.namedItem('dxsm_schema_type').value = 'all';
 			picker.elements.namedItem('dxsm_sort').value = 'recent';
-			['dxsm_seo_filter', 'dxsm_year', 'dxsm_month'].forEach((key) => {
+			['dxsm_seo_filter', 'dxsm_score', 'dxsm_year', 'dxsm_month'].forEach((key) => {
 				const field = picker.elements.namedItem(key);
 				if (field) field.value = '';
 			});
@@ -221,6 +222,45 @@
 			});
 			form.addEventListener('submit', () => window.removeEventListener('beforeunload', warn));
 		}
+	}
+
+	// Kokpit: przeliczenie ocen wszystkich treści. Analiza jest ta sama co w edycji wpisu, wynik zapisuje serwer.
+	const recount = admin.querySelector('[data-dxsm-recount]');
+	if (recount) {
+		const state = admin.querySelector('[data-dxsm-recount-status]');
+		const call = async (action, fields = {}) => {
+			const response = await fetch(recount.dataset.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: new URLSearchParams({ action, nonce: recount.dataset.nonce, ...fields }) });
+			const reply = await response.json();
+			if (!response.ok || !reply.success) {
+				throw new Error(action);
+			}
+			return reply.data;
+		};
+		recount.addEventListener('click', async () => {
+			recount.disabled = true;
+			let done = 0;
+			let failed = 0;
+			try {
+				const ids = await call('dxsm_score_queue');
+				for (const id of ids) {
+					state.textContent = 'Przeliczam treść ' + (done + failed + 1) + ' z ' + ids.length + '. Nie zamykaj tej karty.';
+					try {
+						const { scores } = window.dxsmAnalyze(await call('dxsm_score_source', { id }));
+						await call('dxsm_score_save', { id, seo: scores.seo, readability: scores.readability });
+						done++;
+					} catch {
+						failed++;
+					}
+				}
+				state.textContent = 'Gotowe. Przeliczono: ' + done + (failed ? ', z błędem: ' + failed : '') + '.';
+				if (done) {
+					window.setTimeout(() => window.location.reload(), 1200);
+				}
+			} catch {
+				state.textContent = 'Nie udało się pobrać listy treści. Odśwież stronę i spróbuj ponownie.';
+			}
+			recount.disabled = false;
+		});
 	}
 
 	const button = admin.querySelector('[data-dxsm-copy-json]');
