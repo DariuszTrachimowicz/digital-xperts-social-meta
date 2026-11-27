@@ -3,7 +3,7 @@ Contributors: digitalxperts
 Requires at least: 6.2
 Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 2.6.0
+Stable tag: 2.6.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -84,6 +84,11 @@ Nie wysyła treści ani danych osobowych. Raz na kilka godzin sprawdza na GitHub
 Wtyczka korzysta z danych zapisanych w WordPressie. Do sprawdzenia aktualizacji łączy się z github.com bez przesyłania danych strony. Panel czyta publiczną wersję strony z tego samego serwera.
 
 == Changelog ==
+
+= 2.6.1 =
+
+* Panel Social Meta nie pokazuje już komunikatów i reklam innych wtyczek. Zostają własne potwierdzenia zapisu i ostrzeżenia WordPressa o awarii.
+* Nagłówek panelu: tytuł nad zakładkami Kokpit, Treści i Ustawienia, zakładki na wspólnej linii.
 
 = 2.6.0 =
 

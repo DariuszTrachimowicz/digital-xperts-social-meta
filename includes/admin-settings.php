@@ -45,7 +45,21 @@ function dxsm_social_meta_plugin_links( $links ) {
 }
 add_filter( 'plugin_action_links_' . plugin_basename( DXSM_PLUGIN_FILE ), 'dxsm_social_meta_plugin_links' );
 
+// Reklamy i powiadomienia innych wtyczek nie wchodzą do panelu. Zostają ostrzeżenia WordPressa o awarii:
+// tryb odzyskiwania, wstrzymana albo wyłączona wtyczka, wstrzymany motyw, niedokończona aktualizacja.
+function dxsm_remove_foreign_notices() {
+	foreach ( array( 'admin_notices', 'all_admin_notices', 'user_admin_notices', 'network_admin_notices' ) as $hook ) {
+		remove_all_actions( $hook );
+	}
+	foreach ( array( 'wp_recovery_mode_nag' => 1, 'deactivated_plugins_notice' => 5, 'paused_plugins_notice' => 5, 'paused_themes_notice' => 5, 'maintenance_nag' => 10 ) as $callback => $priority ) {
+		if ( function_exists( $callback ) ) {
+			add_action( 'admin_notices', $callback, $priority );
+		}
+	}
+}
+
 function dxsm_enqueue_social_meta_admin() {
+	add_action( 'in_admin_header', 'dxsm_remove_foreign_notices', PHP_INT_MAX );
 	dxsm_enqueue_seo_preview();
 	wp_enqueue_style( 'dxsm-social-meta-admin', plugins_url( 'assets/social-meta-admin.css', DXSM_PLUGIN_FILE ), array(), DXSM_VERSION );
 	wp_enqueue_script( 'dxsm-social-meta-admin', plugins_url( 'assets/social-meta-admin.js', DXSM_PLUGIN_FILE ), array(), DXSM_VERSION, true );
@@ -210,6 +224,8 @@ function dxsm_render_social_meta_page() {
 				<a href="<?php echo esc_url( dxsm_admin_url( array( 'dxsm_view' => 'settings' ) ) ); ?>"<?php echo $settings_view ? ' aria-current="page"' : ''; ?>>Ustawienia</a>
 			</nav>
 		</header>
+		<?php // WordPress przenosi komunikaty za ten znacznik, czyli pod nagłówek, a nie między tytuł a zakładki. ?>
+		<hr class="wp-header-end">
 		<?php
 		if ( $settings_view ) {
 			dxsm_render_admin_settings( $settings );
@@ -225,7 +241,23 @@ function dxsm_render_social_meta_page() {
 
 function dxsm_render_admin_settings( $settings ) {
 	?>
-	<?php settings_errors(); ?>
+	<?php // Własne potwierdzenie po powrocie z options.php: settings_errors() wypisałoby też komunikaty ustawień innych wtyczek. ?>
+	<?php if ( isset( $_GET['settings-updated'] ) && 'true' === $_GET['settings-updated'] ) : ?>
+		<?php
+		// options.php zgłasza nieudany zapis tym samym kodem co udany, tylko z typem „error”.
+		$dxsm_save_failed = false;
+		foreach ( get_settings_errors( 'general' ) as $dxsm_settings_error ) {
+			if ( 'settings_updated' === $dxsm_settings_error['code'] && 'error' === $dxsm_settings_error['type'] ) {
+				$dxsm_save_failed = true;
+			}
+		}
+		?>
+		<?php if ( $dxsm_save_failed ) : ?>
+			<div class="notice notice-error inline" role="alert"><p>Nie udało się zapisać ustawień.</p></div>
+		<?php else : ?>
+			<div class="notice notice-success inline" role="status"><p>Zapisano ustawienia.</p></div>
+		<?php endif; ?>
+	<?php endif; ?>
 	<?php \DigitalXperts\SocialMeta\Plugin::render_share_settings(); ?>
 	<section class="dxsm-admin-settings dxsm-admin-panel" aria-labelledby="dxsm-admin-settings-heading">
 		<h2 id="dxsm-admin-settings-heading">Ustawienia edytora</h2>
